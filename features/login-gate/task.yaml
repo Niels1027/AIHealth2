@@ -2,7 +2,7 @@
 name: login-gate
 title: 登录页 · 体验直入与管理员入口
 status: handed-off
-version: v0.3
+version: v0.4
 holder: SeanMa27
 createdAt: 2026-08-29T06:30:42.193Z
 defaultNotify: [Niels1027]
@@ -32,6 +32,10 @@ handoffs:
   - id: H2
     version: v0.3
     ts: 2026-08-29T07:22:28.780Z
+    to: [Niels1027]
+  - id: H3
+    version: v0.4
+    ts: 2026-08-29T10:35:17.007Z
     to: [Niels1027]
 stubs:
   - what: 管理口令写死在页面 JS（moss-2026），浏览器端比对

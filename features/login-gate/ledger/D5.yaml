@@ -1,0 +1,11 @@
+# Baton 决策台账条目（AI 从对话/评论提炼；纠错在对话里说，不手编此文件）
+id: D5
+feature: login-gate
+title: 管理口令入口保持弱化，不做高亮
+conclusion: 不采纳高亮管理口令入口。折叠态那行灰色「有管理口令？」是刻意设计，不是没做完：D1 定了「体验直入」是主路径，D2 定了管理员与普通人共用同一入口——把管理入口做显眼会和主 CTA 抢第一屏，而绝大多数访问者不是管理员。管理员是低频、知道自己要干什么的角色，能找到即可，不需要被引导。保持现状：折叠态灰字下划线，点开才露出输入框。
+decidedBy: SeanMa27
+source:
+  kind: comment
+  ref: t-mte3ayetw991（Niels1027 在 b-admin-key 提出高亮）
+anchors: [b-admin-key]
+ts: 2026-08-29T10:23:38.918Z

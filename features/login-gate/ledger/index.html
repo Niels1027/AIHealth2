@@ -23,8 +23,26 @@ a:hover{text-decoration:underline}
 .empty{color:var(--mut);text-align:center;padding:70px 0;font-size:14px}
 </style></head><body><div class="wrap">
 <h1>登录页 · 体验直入与管理员入口 · 决策台账</h1>
-<div class="sub">3 条 · 生成于 2026-08-29 · 原型 v0.2 · <a href="../index.html">打开原型 ↗</a></div>
+<div class="sub">6 条 · 生成于 2026-08-29 · 原型 v0.3 · <a href="../index.html">打开原型 ↗</a></div>
 <div class="note">本页由 Baton 自动生成，入账即重渲染，手工编辑会被覆盖。拍板在对话里说，AI 提炼入账；纠错也在对话里说（如「D9 记错了」）。</div>
+<article class="entry" id="D6">
+  <header><span class="chip">D6</span><h2>主 CTA 改为亮黄 #f0c33c + 墨色字，苔绿退为品牌与状态色</h2></header>
+  <p class="conclusion">「开始体验」按钮从苔绿实心（#2f6d5a + 白字）改为亮黄实心（#f0c33c + 墨字 #1f2725），hover #e3b52b。目的是让主入口更抢眼。三点约束：一、必须配深墨字，不得白字——黄底白字对比度仅 1.67:1，完全不可读；现方案 9.15:1，比原苔绿白字的 6.08:1 还高。二、由此登录页出现双色分工：苔绿=品牌与状态（「问」标记、知识库状态点、聚焦环），亮黄=唯一动作色，全页只此一处。三、明知的取舍——此前答复 Niels 时指出「登录页单独换色会与主界面割裂」，本决定接受该割裂：黄色只作用于登录页 CTA，globals.css 的 --color-moss 全站主色不动，不改设计系统。若日后要让主界面发送按钮等一致，需另立决策。</p>
+  <footer>拍板 SeanMa27 · 2026-08-29
+    <span class="src">出处 · /reply 处理 t-mte3bxgghmla 期间，产品直接指定改黄色</span> <a href="../index.html#baton-block=b-enter">原型位置 · b-enter ↗</a></footer>
+</article>
+<article class="entry" id="D5">
+  <header><span class="chip">D5</span><h2>管理口令入口保持弱化，不做高亮</h2></header>
+  <p class="conclusion">不采纳高亮管理口令入口。折叠态那行灰色「有管理口令？」是刻意设计，不是没做完：D1 定了「体验直入」是主路径，D2 定了管理员与普通人共用同一入口——把管理入口做显眼会和主 CTA 抢第一屏，而绝大多数访问者不是管理员。管理员是低频、知道自己要干什么的角色，能找到即可，不需要被引导。保持现状：折叠态灰字下划线，点开才露出输入框。</p>
+  <footer>拍板 SeanMa27 · 2026-08-29
+    <a href="../index.html#baton-thread=t-mte3ayetw991（Niels1027 在 b-admin-key 提出高亮）">评论原文 ↗</a> <a href="../index.html#baton-block=b-admin-key">原型位置 · b-admin-key ↗</a></footer>
+</article>
+<article class="entry" id="D4">
+  <header><span class="chip">D4</span><h2>产品名保留「健康问书」，副标题改口语化</h2></header>
+  <p class="conclusion">「健康咨询」不采纳：一、「书」是差异化根基——所有回答出自导入书籍原文、句句可查，去掉「书」就和普通健康问答机器人没区别；二、「咨询」在健康领域带医疗合规暗示，与现网免责声明「不构成医疗建议」相冲突；三、改名要同时动 layout.tsx 的 title、icon.svg 的「问」字和首页文案，不是改一个字符串。但提出的痛点成立——原副标题「基于《超越百岁》等书籍原文回答，每个结论都可溯源」是产品视角措辞，「可溯源」属术语。登录页副标题改为「答案都从《超越百岁》等书里找，每句话都能翻到出处」。仅改登录页第一印象文案，ChatApp 空状态那句保留不动。</p>
+  <footer>拍板 SeanMa27 · 2026-08-29
+    <a href="../index.html#baton-thread=t-mte3a94o17up（Niels1027 在 b-brand 提出改名）">评论原文 ↗</a> <a href="../index.html#baton-block=b-brand">原型位置 · b-brand ↗</a></footer>
+</article>
 <article class="entry" id="D3">
   <header><span class="chip">D3</span><h2>管理口令必须服务端校验，不加 NEXT_PUBLIC_ 变量</h2></header>
   <p class="conclusion">原型里口令写死在页面属演示替身。真实现：新增服务端校验接口，口令只存服务端环境变量、只在服务端比对；前端只负责递交输入、接收会话。明确不允许为此引入 NEXT_PUBLIC_ 前缀变量——带该前缀的值会打进前端产物，任何访问者可见，等于把口令公开。本项目目前零个 NEXT_PUBLIC_ 变量，这个纪录保持住。</p>
