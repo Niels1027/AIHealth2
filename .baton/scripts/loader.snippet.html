@@ -16,8 +16,6 @@ html.bt-shift body{margin-right:320px}
 .bt-shd b{font-weight:650;font-size:14px}
 .bt-shd small{color:#94a3b8}
 .bt-shd .bt-x{margin-left:auto;cursor:pointer;color:#94a3b8;border:0;background:none;font-size:15px;padding:0}
-.bt-modew{font-size:11.5px;color:#64748b;padding:8px 14px;border-bottom:1px solid #f8fafc}
-.bt-modew a{color:#4f46e5;cursor:pointer;text-decoration:none;margin-left:6px}
 .bt-scroll{overflow:auto;flex:1}
 .bt-sec{padding:12px 14px 4px;font-size:11px;letter-spacing:.08em;color:#94a3b8;font-weight:600}
 .bt-item{padding:10px 14px;border-bottom:1px solid #f8fafc;cursor:pointer}
@@ -28,6 +26,7 @@ html.bt-shift body{margin-right:320px}
 .bt-dr .bt-x2{float:right;border:0;background:none;color:#b45309;cursor:pointer;font-size:13px;padding:0 2px}
 .bt-sendbar{padding:12px 14px;border-top:1px solid #f1f5f9;background:#fffdf5}
 .bt-sendbar button{width:100%;border:0;background:#4f46e5;color:#fff;border-radius:8px;padding:9px;font:600 13px/1 -apple-system,sans-serif;cursor:pointer}
+.bt-sendbar small{display:block;text-align:center;color:#94a3b8;margin-top:6px;font-size:11.5px}
 .bt-empty{padding:28px 14px;color:#94a3b8;text-align:center}
 .bt-panel{position:fixed;right:18px;bottom:64px;z-index:9996;width:340px;max-height:70vh;overflow:auto;background:#fff;border:1px solid #e2e8f0;border-radius:14px;box-shadow:0 12px 40px rgba(15,23,42,.18);font:13px/1.65 -apple-system,"PingFang SC",sans-serif;color:#1e293b;display:none}
 html.bt-shift .bt-panel{right:338px}
@@ -57,7 +56,6 @@ html.bt-shift .bt-panel{right:338px}
 (function(){
 "use strict";
 var THREADS=[],DRAFTS=[],HEALTH=null,MODE=false,PANEL=null,SIDE=null,FABS=null;
-var SEND_MODE=null; // 'batch' | 'instant'
 function $(s,r){return (r||document).querySelector(s)}
 function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
 function escap(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
@@ -107,12 +105,9 @@ function renderSide(){
   var live=rs.filter(function(t){return known[t.block]!=null}).sort(function(a,b){return known[a.block]-known[b.block]});
   var drift=rs.filter(function(t){return known[t.block]==null});
   var h='<div class="bt-shd"><b>评论</b><small>'+rs.length+' 线程 · threads.jsonl</small><button class="bt-x" title="收起">✕</button></div>';
-  if(HEALTH){
-    h+='<div class="bt-modew">发送方式：'+(SEND_MODE==='batch'?'攒一轮再发（默认）':'逐条即发')+'<a data-act="mode">切换</a></div>';
-  }
   h+='<div class="bt-scroll">';
   if(HEALTH&&DRAFTS.length){
-    h+='<div class="bt-sec">本轮草稿 · '+DRAFTS.length+' 条（未发送）</div>';
+    h+='<div class="bt-sec">本轮新增 · '+DRAFTS.length+' 条（未发出）</div>';
     DRAFTS.forEach(function(d){
       h+='<div class="bt-item bt-dr" data-did="'+escap(d.id)+'"><button class="bt-x2" title="撤回" data-act="del">✕</button><div class="bt-meta">'+escap(d.block||'')+'</div><div>'+escap(d.body)+'</div></div>';
     });
@@ -131,7 +126,7 @@ function renderSide(){
   }
   if(!rs.length&&!DRAFTS.length)h+='<div class="bt-empty">还没有评论'+(HEALTH?'——点右下角「✎ 点块评论」，再点任意区块开始':'')+'</div>';
   h+='</div>';
-  if(HEALTH&&DRAFTS.length)h+='<div class="bt-sendbar"><button data-act="send">发送本轮（'+DRAFTS.length+' 条 → 一个批次）</button></div>';
+  if(HEALTH&&DRAFTS.length)h+='<div class="bt-sendbar"><button data-act="send">发出本轮（'+DRAFTS.length+' 条）</button><small>一次同步给团队 · 一张合并通知卡</small></div>';
   s.innerHTML=h;
   renderFabs();
 }
@@ -142,7 +137,6 @@ function ensureSide(){
     var act=ev.target.getAttribute&&ev.target.getAttribute('data-act');
     if(act==='del'){var item=ev.target.closest('.bt-dr');delDraft(item.getAttribute('data-did'));return}
     if(act==='send'){sendRound();return}
-    if(act==='mode'){SEND_MODE=SEND_MODE==='batch'?'instant':'batch';store('send',SEND_MODE);renderSide();toast(SEND_MODE==='batch'?'已切换：攒一轮再发':'已切换：逐条即发');return}
     if(ev.target.classList&&ev.target.classList.contains('bt-x')){toggleSide(false);return}
     var item=ev.target.closest&&ev.target.closest('.bt-item[data-b]');
     if(item){hlBlock(item.getAttribute('data-b'));openPanel(item.getAttribute('data-b'),item.getAttribute('data-t'))}
@@ -200,9 +194,8 @@ function openPanel(block,focusThread){
   var list=block?roots().filter(function(t){return t.block===block}):roots();
   var body=list.map(function(t){return '<div class="bt-th" data-t="'+escap(t.id)+'">'+threadHtml(t)+'</div>'}).join('')||'<div class="bt-th" style="color:#94a3b8">这个区块还没有评论</div>';
   var canWrite=!!HEALTH;
-  var hint=SEND_MODE==='batch'?'暂存到本轮，侧栏可回看/撤回，最后一起发送':'立即发送并同步给团队';
   var compose=block&&canWrite
-    ?'<div class="bt-compose"><textarea placeholder="就这个区块说点什么… @AI 可召唤代答（只答台账有记载的）"></textarea><div class="bt-row"><small>'+escap(HEALTH.user||'')+' · '+hint+'</small><button>'+(SEND_MODE==='batch'?'暂存本轮':'发送')+'</button></div></div>'
+    ?'<div class="bt-compose"><textarea placeholder="就这个区块说点什么… @AI 可召唤代答（只答台账有记载的）"></textarea><div class="bt-row"><small>'+escap(HEALTH.user||'')+' · 不会立刻发出 · 右侧可回看/撤回</small><button>暂存到本轮</button></div></div>'
     :(block?'<div class="bt-compose"><small>只读模式 · 在仓库里跑 node .baton/scripts/open.mjs &lt;功能名&gt; 打开即可评论</small></div>':'');
   p.innerHTML='<div class="bt-hd"><span>'+(block?'评论 · '+escap(block):'全部评论')+'</span><small>'+list.length+' 线程</small></div>'+body+compose;
   p.classList.add('bt-open');
@@ -210,19 +203,11 @@ function openPanel(block,focusThread){
   var btn=p.querySelector('.bt-compose button');
   if(btn)btn.addEventListener('click',function(){
     var ta=p.querySelector('textarea');var v=(ta.value||'').trim();if(!v)return;
-    if(SEND_MODE==='batch'){
-      post('/baton/draft',{path:location.pathname,block:block,body:v}).then(function(r){
-        ta.value='';toast('已暂存 · 本轮第 '+r.count+' 条（侧栏可回看，最后一起发送）');
-        return fetchDrafts();
-      }).then(function(){renderSide();if(!sideOpen())toggleSide(true)})
-        .catch(function(e){toast('暂存失败：'+e.message)});
-    }else{
-      post('/baton/comment',{path:location.pathname,block:block,body:v}).then(function(r){
-        ta.value='';toast(/@AI/i.test(v)?'已入库 · @AI 已召唤，代答会出现在这条线程里':(r.pushed?'已入库并同步给团队':'已入库本地（'+(r.syncHint||'待同步')+'）'));
-        return reload();
-      }).then(function(){openPanel(block)})
-        .catch(function(e){toast('发送失败：'+e.message)});
-    }
+    post('/baton/draft',{path:location.pathname,block:block,body:v}).then(function(r){
+      ta.value='';toast(/@AI/i.test(v)?'已暂存 · @AI 将随本轮一起送达':'已暂存 · 本轮第 '+r.count+' 条（右侧可回看，最后一起发出）');
+      return fetchDrafts();
+    }).then(function(){renderSide();if(!sideOpen())toggleSide(true)})
+      .catch(function(e){toast('暂存失败：'+e.message)});
   });
 }
 function ensurePanel(){
@@ -254,7 +239,7 @@ function delDraft(id){
 }
 function sendRound(){
   post('/baton/send-round',{path:location.pathname}).then(function(r){
-    toast(r.pushed?('已发送本轮 '+r.count+' 条（一个批次）'):('本轮已入库本地，未同步：'+(r.hint||r.reason)));
+    toast(r.pushed?('已发出本轮 '+r.count+' 条 · 团队收到一张合并通知卡'):('本轮已入库本地，未同步：'+(r.hint||r.reason)));
     return fetchDrafts().then(reload);
   }).catch(function(e){toast('发送失败：'+e.message)});
 }
@@ -288,7 +273,6 @@ function boot(){
     return fetch('/baton/health',{cache:'no-store'}).then(function(r){return r.ok?r.json():null}).catch(function(){return null});
   }).then(function(h){
     HEALTH=h;
-    SEND_MODE=stored('send')||'batch';
     return fetchDrafts();
   }).then(function(){
     renderFabs();renderSide();
