@@ -1,0 +1,22 @@
+node_modules/
+.next/
+.env.local
+.env*.local
+.DS_Store
+*.tsbuildinfo
+next-env.d.ts
+
+# 本地数据：SQLite 库（含向量索引与聊天记录），换机器按 README 重新导入即可
+data/*
+# 但保留提取好的书籍正文，方便直接导入
+!data/books/
+data/books/*
+!data/books/*.md
+
+# 电子书原件（体积大且有版权），不入库
+The Science and Art of Longevity/
+
+# 开发过程截图
+screenshot-book.png
+screenshot-settings.png
+screenshot.png

@@ -1,0 +1,143 @@
+@import "tailwindcss";
+
+@theme {
+  /* 纸感 + 苔绿：单一强调色系统 */
+  --color-paper: #fbfbf9;
+  --color-card: #ffffff;
+  --color-ink: #1f2725;
+  --color-pen: #6b7470;
+  --color-faint: #98a19c;
+  --color-moss: #2f6d5a;
+  --color-moss-deep: #245748;
+  --color-mist: #ecf3ef;
+  --color-line: #e5e7e3;
+  --color-warn: #b4552d;
+
+  --font-sans: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", sans-serif;
+  --font-song: "Songti SC", "STSong", "SimSun", "Source Han Serif SC", serif;
+  --font-mono: "SF Mono", ui-monospace, "Menlo", monospace;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 宋体书名/章节标签 */
+.font-song {
+  font-family: var(--font-song);
+}
+
+::selection {
+  background: #cfe3da;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-moss);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* 流式输出光标 */
+.stream-caret::after {
+  content: "";
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: -0.15em;
+  background: var(--color-moss);
+  animation: caret-blink 1s steps(2) infinite;
+}
+
+@keyframes caret-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.msg-enter {
+  animation: msg-in 0.25s ease-out;
+}
+
+@keyframes msg-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .msg-enter { animation: none; }
+  .stream-caret::after { animation: none; }
+  * { transition-duration: 0.01ms !important; }
+}
+
+/* 回答正文的排版微调 */
+.answer-prose {
+  font-size: 0.9375rem;
+  line-height: 1.75;
+  color: var(--color-ink);
+}
+.answer-prose :where(p, ul, ol) { margin: 0.5em 0; }
+.answer-prose :where(h1, h2, h3, h4) {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  margin: 0.9em 0 0.35em;
+  color: var(--color-ink);
+}
+.answer-prose :where(ul) { padding-left: 1.2em; list-style: disc; }
+.answer-prose :where(ol) { padding-left: 1.2em; list-style: decimal; }
+.answer-prose :where(li)::marker { color: var(--color-faint); }
+.answer-prose :where(strong) { font-weight: 600; }
+.answer-prose :where(code) {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background: var(--color-mist);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+}
+.answer-prose :where(table) {
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  margin: 0.6em 0;
+}
+.answer-prose :where(th, td) {
+  border: 1px solid var(--color-line);
+  padding: 0.35em 0.7em;
+  text-align: left;
+}
+.answer-prose :where(th) { background: var(--color-mist); font-weight: 600; }
+.answer-prose :where(blockquote) {
+  border-left: 3px solid var(--color-line);
+  padding-left: 0.8em;
+  color: var(--color-pen);
+  margin: 0.5em 0;
+}
+
+/* 引用编号小药丸 */
+.cite-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.15rem;
+  height: 1.15rem;
+  padding: 0 0.25rem;
+  margin: 0 0.12rem;
+  border-radius: 999px;
+  background: var(--color-mist);
+  color: var(--color-moss-deep);
+  font-size: 0.7rem;
+  font-weight: 600;
+  vertical-align: 0.14em;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.cite-pill:hover {
+  background: #d8e8e0;
+}
