@@ -5,3 +5,4 @@
 {"id":"t-mtej5x8e0xt1","feature":"classic-frame","block":"b-frame-token","author":"SeanMa27","github":"SeanMa27","body":"采纳了。双线版框收成单线：章级容器 1px #cfd5d0，比控件的线重一档，层级靠深浅不靠条数。直角方向不变。改动在下一版原型里。","kind":"reply","parent":"t-mtehxcztddhw","status":"open","summon":null,"mentions":[],"ts":"2026-08-29T15:23:33.374Z","refs":{"ledger":["D6"]}}
 {"id":"t-mtej5xfqqigq","kind":"status","parent":"t-mtehxcztddhw","status":"resolved","by":"SeanMa27","note":"","ts":"2026-08-29T15:23:33.638Z"}
 {"id":"t-mtej6anzm4p8","feature":"classic-frame","block":"b-circle-keep","author":"SeanMa27","github":"SeanMa27","body":"本轮不改。这一版只动圆角，D4 定了文案不动——改了会让研发的替换清单失去边界。另外全站中文，单独一个按钮改英文也不统一。已记进台账，文案的事另开一版收。","kind":"reply","parent":"t-mtehzoe2ndgo","status":"open","summon":null,"mentions":[],"ts":"2026-08-29T15:23:50.783Z","refs":{"ledger":["D7"]}}
+{"id":"t-mtej6av21vf8","kind":"status","parent":"t-mtehzoe2ndgo","status":"resolved","by":"SeanMa27","note":"","ts":"2026-08-29T15:23:51.038Z"}
