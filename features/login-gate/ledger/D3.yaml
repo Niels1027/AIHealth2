@@ -1,0 +1,11 @@
+# Baton 决策台账条目（AI 从对话/评论提炼；纠错在对话里说，不手编此文件）
+id: D3
+feature: login-gate
+title: 管理口令必须服务端校验，不加 NEXT_PUBLIC_ 变量
+conclusion: 原型里口令写死在页面属演示替身。真实现：新增服务端校验接口，口令只存服务端环境变量、只在服务端比对；前端只负责递交输入、接收会话。明确不允许为此引入 NEXT_PUBLIC_ 前缀变量——带该前缀的值会打进前端产物，任何访问者可见，等于把口令公开。本项目目前零个 NEXT_PUBLIC_ 变量，这个纪录保持住。
+decidedBy: SeanMa27
+source:
+  kind: session
+  ref: 复盘会话 2026-08-29：口令校验位置
+anchors: [b-admin-key]
+ts: 2026-08-29T06:53:02.480Z

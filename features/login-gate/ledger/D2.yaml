@@ -1,0 +1,11 @@
+# Baton 决策台账条目（AI 从对话/评论提炼；纠错在对话里说，不手编此文件）
+id: D2
+feature: login-gate
+title: 管理员身份走同一入口，侧栏身份切换开关移除
+conclusion: 不开 /admin/login 独立入口，也不在登录页放「以用户身份 / 以管理员身份」的选择。管理员在同一张登录页里凭管理口令进入，身份由入口决定、进入后不可切换。现网 ChatApp 侧栏底部那对「用户 / 管理员」药丸（走 hr_role cookie）随之删掉，改成只读的身份卡：头像 + 角色 + 退出；管理员额外显示「知识库管理」入口。
+decidedBy: Niels1027
+source:
+  kind: session
+  ref: /preview 开工时选型：管理员入口三选一
+anchors: [b-admin-key, b-identity-card, b-identity-current]
+ts: 2026-08-29T06:35:23.207Z

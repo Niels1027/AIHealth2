@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>登录页 · 体验直入与管理员入口 · 决策台账</title>
+<style>
+:root{--ink:#1c1917;--mut:#78716c;--line:#e7e5e4;--accent:#4f46e5;--bg:#fafaf9}
+*{box-sizing:border-box;margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.75 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;padding:56px 20px 90px}
+.wrap{max-width:760px;margin:0 auto}
+h1{font-size:22px;font-weight:700;letter-spacing:.01em}
+.sub{color:var(--mut);font-size:13px;margin-top:6px}
+.note{color:var(--mut);font-size:12.5px;margin-top:14px;padding:10px 14px;border:1px solid var(--line);border-radius:10px;background:#fff}
+.entry{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin-top:18px}
+.entry header{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.chip{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--mut);border:1px solid var(--line);border-radius:6px;padding:1px 7px;background:var(--bg)}
+.entry h2{font-size:15.5px;font-weight:650}
+.cite{font-size:12px;color:var(--mut);margin-left:auto}
+.conclusion{margin-top:10px;font-size:14.5px}
+.entry footer{margin-top:12px;font-size:12.5px;color:var(--mut);display:flex;gap:14px;flex-wrap:wrap}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+.src{color:var(--mut)}
+.empty{color:var(--mut);text-align:center;padding:70px 0;font-size:14px}
+</style></head><body><div class="wrap">
+<h1>登录页 · 体验直入与管理员入口 · 决策台账</h1>
+<div class="sub">3 条 · 生成于 2026-08-29 · 原型 v0.1 · <a href="../index.html">打开原型 ↗</a></div>
+<div class="note">本页由 Baton 自动生成，入账即重渲染，手工编辑会被覆盖。拍板在对话里说，AI 提炼入账；纠错也在对话里说（如「D9 记错了」）。</div>
+<article class="entry" id="D3">
+  <header><span class="chip">D3</span><h2>管理口令必须服务端校验，不加 NEXT_PUBLIC_ 变量</h2></header>
+  <p class="conclusion">原型里口令写死在页面属演示替身。真实现：新增服务端校验接口，口令只存服务端环境变量、只在服务端比对；前端只负责递交输入、接收会话。明确不允许为此引入 NEXT_PUBLIC_ 前缀变量——带该前缀的值会打进前端产物，任何访问者可见，等于把口令公开。本项目目前零个 NEXT_PUBLIC_ 变量，这个纪录保持住。</p>
+  <footer>拍板 SeanMa27 · 2026-08-29
+    <span class="src">出处 · 复盘会话 2026-08-29：口令校验位置</span> <a href="../index.html#baton-block=b-admin-key">原型位置 · b-admin-key ↗</a></footer>
+</article>
+<article class="entry" id="D2">
+  <header><span class="chip">D2</span><h2>管理员身份走同一入口，侧栏身份切换开关移除</h2></header>
+  <p class="conclusion">不开 /admin/login 独立入口，也不在登录页放「以用户身份 / 以管理员身份」的选择。管理员在同一张登录页里凭管理口令进入，身份由入口决定、进入后不可切换。现网 ChatApp 侧栏底部那对「用户 / 管理员」药丸（走 hr_role cookie）随之删掉，改成只读的身份卡：头像 + 角色 + 退出；管理员额外显示「知识库管理」入口。</p>
+  <footer>拍板 Niels1027 · 2026-08-29
+    <span class="src">出处 · /preview 开工时选型：管理员入口三选一</span> <a href="../index.html#baton-block=b-admin-key">原型位置 · b-admin-key ↗</a> <a href="../index.html#baton-block=b-identity-card">原型位置 · b-identity-card ↗</a> <a href="../index.html#baton-block=b-identity-current">原型位置 · b-identity-current ↗</a></footer>
+</article>
+<article class="entry" id="D1">
+  <header><span class="chip">D1</span><h2>登录方式 = 体验直入，不做注册与凭证</h2></header>
+  <p class="conclusion">登录页主入口是「开始体验」，点了直接进，不要手机号验证码、不要邮箱密码、不要注册流程。产品定位是书籍知识库演示，加凭证只会挡住第一次来的人。进入后的身份是「体验用户」，本机会话，不收集个人信息。</p>
+  <footer>拍板 Niels1027 · 2026-08-29
+    <span class="src">出处 · /preview 开工时选型：登录方式四选一</span> <a href="../index.html#baton-block=b-enter">原型位置 · b-enter ↗</a> <a href="../index.html#baton-block=b-brand">原型位置 · b-brand ↗</a></footer>
+</article>
+</div></body></html>

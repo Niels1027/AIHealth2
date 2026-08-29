@@ -1,0 +1,44 @@
+# Baton 任务档案（AI 与脚本维护；状态/版本/载体/交接索引）
+name: login-gate
+title: 登录页 · 体验直入与管理员入口
+status: handed-off
+version: v0.2
+holder: SeanMa27
+createdAt: 2026-08-29T06:30:42.193Z
+defaultNotify: [Niels1027]
+carriers:
+  - path: src/components/shared.ts
+    symbol: useRole
+    note: 现网身份来源——hr_role cookie 开关，无真实登录；登录页替换它
+  - path: src/components/ChatApp.tsx
+    symbol: 身份切换
+    note: 现网侧栏底部「用户/管理员」药丸，本次移除
+  - path: src/components/AdminPanel.tsx
+    symbol: AdminPanel
+    note: 管理员进入后的目的地（知识库管理）
+  - path: src/app/globals.css
+    symbol: "--color-moss"
+    note: 设计令牌来源（纸感 + 苔绿）
+  - path: src/app/layout.tsx
+    symbol: 健康问书
+    note: 产品名与副标题文案
+  - path: src/app/icon.svg
+    note: 品牌标记「问」的现网画法
+handoffs:
+  - id: H1
+    version: v0.2
+    ts: 2026-08-29T07:05:38.268Z
+    to: [Niels1027]
+stubs:
+  - what: 管理口令写死在页面 JS（moss-2026），浏览器端比对
+    block: b-admin-key
+    real: 新增服务端校验接口（src/app/api/auth/route.ts，仿现有 10 个 route 的模式）；口令只存服务端 env（本项目现无任何 NEXT_PUBLIC_ 变量，不要为此破例），只在服务端比对；前端只递交输入、收 cookie/session
+    risk: security
+  - what: 知识库状态行的「3 本书 · 1,284 段」是写死的示意数字
+    block: b-kb-status
+    real: 走现有 /api/health（src/app/api/health/route.ts 已返回 stats.readyDocuments / chunks / embeddedChunks 与 embedding.ok）；未就绪时按现网 ChatApp 的说法降级，别显示假数字
+    risk: display
+  - what: 进入后的身份只活在页面 JS 变量里，刷新即丢
+    block: b-identity-card
+    real: 替换 hr_role cookie 这套（src/components/shared.ts 的 useRole）；体验用户与管理员都要有可持久化的会话，管理员那份必须是服务端签发、前端不可伪造——现在 admin 只要改 cookie 就能拿到
+    risk: security

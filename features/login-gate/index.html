@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="baton-version" content="v0.2">
+<title>登录页 · 体验直入与管理员入口 — 健康问书</title>
+<style>
+:root{
+  --paper:#fbfbf9; --card:#fff; --ink:#1f2725; --pen:#6b7470; --faint:#98a19c;
+  --moss:#2f6d5a; --moss-deep:#245748; --mist:#ecf3ef; --line:#e5e7e3; --warn:#b4552d;
+  --sans:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Segoe UI",sans-serif;
+  --song:"Songti SC","STSong","SimSun","Source Han Serif SC",serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#f2f2ef;color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+::selection{background:#cfe3da}
+:focus-visible{outline:2px solid var(--moss);outline-offset:2px;border-radius:4px}
+
+/* ── 画布（原型外壳，非交付帧） ── */
+.canvas{max-width:1040px;margin:0 auto;padding:40px 24px 72px}
+.canvas-hd{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:6px}
+.canvas-hd h1{font-family:var(--song);font-size:19px;font-weight:600;margin:0}
+.canvas-hd .ver{font-size:12px;color:var(--faint);font-variant-numeric:tabular-nums}
+.canvas-note{font-size:12.5px;line-height:1.7;color:var(--faint);margin:0 0 26px}
+.canvas-note kbd{font-family:"SF Mono",ui-monospace,Menlo,monospace;font-size:11.5px;background:#e8e8e4;border-radius:4px;padding:1px 5px;color:var(--pen)}
+.sec-label{font-size:11.5px;letter-spacing:.08em;color:var(--faint);margin:0 0 10px;text-transform:uppercase}
+
+/* ── 正式帧 ── */
+.frame{background:var(--paper);border:1px solid #e0e0dc;border-radius:14px;box-shadow:0 1px 3px rgba(31,39,37,.05),0 12px 32px rgba(31,39,37,.06);overflow:hidden}
+.frame-bar{height:34px;background:#f6f6f3;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 12px;gap:6px}
+.dot{width:9px;height:9px;border-radius:50%;background:#dcdcd7}
+
+/* ── 登录页本体 ── */
+.gate{min-height:520px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:56px 24px 30px}
+.gate-inner{width:100%;max-width:344px}
+
+.brand{text-align:center}
+.mark{width:46px;height:46px;border-radius:12px;background:var(--moss);display:inline-flex;align-items:center;justify-content:center;font-family:var(--song);font-size:27px;font-weight:600;color:var(--paper);line-height:1}
+.brand h2{font-family:var(--song);font-size:25px;font-weight:600;margin:16px 0 0;letter-spacing:.02em}
+.brand p{font-size:13.5px;line-height:1.7;color:var(--pen);margin:9px 0 0}
+
+.kb{display:flex;align-items:center;justify-content:center;gap:7px;margin-top:22px;font-size:12px;color:var(--pen)}
+.kb i{width:6px;height:6px;border-radius:50%;background:var(--moss);flex:none}
+.kb.off i{background:var(--faint)}
+.kb b{font-weight:500;font-variant-numeric:tabular-nums}
+
+.enter{margin-top:30px}
+.btn{width:100%;height:44px;border:0;border-radius:10px;background:var(--moss);color:#fff;font-family:inherit;font-size:14.5px;font-weight:500;cursor:pointer;transition:background .15s}
+.btn:hover{background:var(--moss-deep)}
+.btn[disabled]{opacity:.55;cursor:default}
+.enter .sub{margin:11px 0 0;font-size:12px;color:var(--faint);text-align:center}
+
+.admin{margin-top:26px;padding-top:20px;border-top:1px solid var(--line);text-align:center}
+.linkbtn{border:0;background:none;padding:4px;font-family:inherit;font-size:12.5px;color:var(--pen);cursor:pointer;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
+.linkbtn:hover{color:var(--ink)}
+.keyform{display:none;text-align:left}
+.keyform.open{display:block}
+.keyform label{display:block;font-size:12px;color:var(--pen);margin-bottom:7px}
+.keyrow{display:flex;gap:8px}
+.keyrow input{flex:1;min-width:0;height:38px;padding:0 12px;border:1px solid var(--line);border-radius:9px;background:var(--card);font-family:inherit;font-size:13.5px;color:var(--ink)}
+.keyrow input::placeholder{color:#c3c9c5}
+.keyrow input:focus{border-color:var(--moss);outline:none}
+.keyrow button{height:38px;padding:0 15px;border:1px solid var(--line);border-radius:9px;background:var(--card);font-family:inherit;font-size:13px;color:var(--ink);cursor:pointer}
+.keyrow button:hover{border-color:#cfd5d1}
+.keyform.err .keyrow input{border-color:var(--warn)}
+.keyform .msg{min-height:16px;margin:8px 0 0;font-size:12px;color:var(--warn)}
+.keyform .cancel{margin-top:2px}
+.shake{animation:shake .3s}
+@keyframes shake{0%,100%{transform:none}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+
+.legal{margin-top:44px;font-size:11.5px;line-height:1.7;color:var(--faint);text-align:center;max-width:344px}
+
+/* ── 进入后：侧栏身份区 ── */
+.after{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+.pane{}
+.pane .cap{font-size:11.5px;color:var(--faint);margin:0 0 9px}
+.pane .cap em{font-style:normal;color:var(--warn)}
+.sidebar{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:14px;font-size:12px}
+.sidebar .kbline{display:flex;align-items:center;gap:7px;color:var(--pen);margin-bottom:11px}
+.sidebar .kbline i{width:6px;height:6px;border-radius:50%;background:var(--moss)}
+
+/* 现状：身份切换药丸 */
+.pills{display:inline-flex;border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:2px}
+.pills span{border-radius:999px;padding:4px 10px;color:var(--pen)}
+.pills span.on{background:var(--moss);color:#fff}
+.old{opacity:.55}
+
+/* 新版：身份卡 */
+.who{display:flex;align-items:center;gap:9px}
+.avatar{width:28px;height:28px;border-radius:50%;background:var(--mist);color:var(--moss-deep);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex:none}
+.avatar.adm{background:var(--moss);color:#fff}
+.who .nm{font-size:12.5px;color:var(--ink);line-height:1.35}
+.who .tag{font-size:11px;color:var(--faint)}
+.who .out{margin-left:auto;border:0;background:none;padding:4px;font-family:inherit;font-size:11.5px;color:var(--faint);cursor:pointer}
+.who .out:hover{color:var(--warn)}
+.kbentry{display:none;align-items:center;gap:6px;margin-top:11px;padding-top:11px;border-top:1px solid var(--line);font-size:12px;color:var(--moss)}
+.kbentry.on{display:flex}
+.empty{color:var(--faint);font-size:12px;padding:12px 2px;line-height:1.7}
+
+@media(max-width:760px){.after{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="canvas">
+
+  <div class="canvas-hd">
+    <h1>登录页 · 体验直入与管理员入口</h1>
+    <span class="ver">v0.2</span>
+  </div>
+  <p class="canvas-note">
+    可点：<kbd>开始体验</kbd> 直接进 · <kbd>有管理口令？</kbd> 展开后随便输一个看错误态，输 <kbd>moss-2026</kbd> 进管理员 · 右侧身份卡跟着变，<kbd>退出</kbd> 回到登录页。
+  </p>
+
+  <p class="sec-label">登录页</p>
+  <div class="frame">
+    <div class="frame-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+    <div class="gate">
+      <div class="gate-inner">
+
+        <div class="brand" data-baton-block="b-brand">
+          <span class="mark">问</span>
+          <h2>健康问书</h2>
+          <p>基于《超越百岁》等书籍原文回答，每个结论都可溯源</p>
+        </div>
+
+        <div class="kb" data-baton-block="b-kb-status">
+          <i></i><span>知识库就绪 · <b>3</b> 本书 · <b>1,284</b> 段</span>
+        </div>
+
+        <div class="enter" data-baton-block="b-enter">
+          <button class="btn" id="go">开始体验</button>
+          <p class="sub">无需注册，进入即可提问</p>
+        </div>
+
+        <div class="admin" data-baton-block="b-admin-key">
+          <button class="linkbtn" id="toggleKey">有管理口令？</button>
+          <div class="keyform" id="keyform">
+            <label for="key">管理口令</label>
+            <div class="keyrow">
+              <input id="key" type="password" autocomplete="off" placeholder="输入后可管理知识库">
+              <button id="verify">进入</button>
+            </div>
+            <p class="msg" id="keymsg"></p>
+            <button class="linkbtn cancel" id="cancelKey">取消</button>
+          </div>
+        </div>
+
+      </div>
+      <p class="legal" data-baton-block="b-disclaimer">
+        回答内容整理自已导入书籍，仅供参考，不构成医疗建议
+      </p>
+    </div>
+  </div>
+
+  <p class="sec-label" style="margin-top:34px">进入后 · 侧边栏底部身份区</p>
+  <div class="after">
+
+    <div class="pane">
+      <p class="cap">现状 <em>（本次移除）</em></p>
+      <div class="sidebar old" data-baton-block="b-identity-current">
+        <div class="kbline"><i></i>知识库就绪 · 1,284 段</div>
+        <div class="pills"><span class="on">用户</span><span>管理员</span></div>
+      </div>
+    </div>
+
+    <div class="pane">
+      <p class="cap">新版 · 身份来自入口，不再可切</p>
+      <div class="sidebar" data-baton-block="b-identity-card">
+        <div class="kbline"><i></i>知识库就绪 · 1,284 段</div>
+        <div id="idle" class="empty">还未进入 —— 在左侧登录页选一种方式</div>
+        <div id="who" class="who" style="display:none">
+          <span class="avatar" id="avatar">体</span>
+          <span>
+            <span class="nm" id="name">体验用户</span><br>
+            <span class="tag" id="tag">本机会话 · 不保存个人信息</span>
+          </span>
+          <button class="out" id="out">退出</button>
+        </div>
+        <div class="kbentry" id="kbentry">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg>
+          知识库管理
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function(){
+  var ADMIN_KEY = "moss-2026";
+
+  var go=document.getElementById('go'), toggleKey=document.getElementById('toggleKey'),
+      keyform=document.getElementById('keyform'), key=document.getElementById('key'),
+      verify=document.getElementById('verify'), keymsg=document.getElementById('keymsg'),
+      cancelKey=document.getElementById('cancelKey'),
+      idle=document.getElementById('idle'), who=document.getElementById('who'),
+      avatar=document.getElementById('avatar'), name=document.getElementById('name'),
+      tag=document.getElementById('tag'), out=document.getElementById('out'),
+      kbentry=document.getElementById('kbentry');
+
+  function signIn(role){
+    idle.style.display='none';
+    who.style.display='flex';
+    if(role==='admin'){
+      avatar.textContent='管'; avatar.classList.add('adm');
+      name.textContent='管理员'; tag.textContent='可导入书籍 · 可调模型';
+      kbentry.classList.add('on');
+    }else{
+      avatar.textContent='体'; avatar.classList.remove('adm');
+      name.textContent='体验用户'; tag.textContent='本机会话 · 不保存个人信息';
+      kbentry.classList.remove('on');
+    }
+    go.disabled=true; go.textContent='已进入';
+    closeKey();
+  }
+
+  function signOut(){
+    idle.style.display='block'; who.style.display='none';
+    kbentry.classList.remove('on');
+    go.disabled=false; go.textContent='开始体验';
+  }
+
+  function openKey(){ keyform.classList.add('open'); toggleKey.style.display='none'; key.focus(); }
+  function closeKey(){
+    keyform.classList.remove('open','err'); toggleKey.style.display='';
+    key.value=''; keymsg.textContent='';
+  }
+
+  function tryKey(){
+    var v=key.value.trim();
+    if(!v){ fail('请输入管理口令'); return; }
+    if(v===ADMIN_KEY){ signIn('admin'); }
+    else { fail('口令不正确，请向管理员确认'); }
+  }
+  function fail(m){
+    keyform.classList.add('err'); keymsg.textContent=m;
+    keyform.classList.remove('shake'); void keyform.offsetWidth; keyform.classList.add('shake');
+    key.focus(); key.select();
+  }
+
+  go.addEventListener('click', function(){ signIn('guest'); });
+  toggleKey.addEventListener('click', openKey);
+  cancelKey.addEventListener('click', closeKey);
+  verify.addEventListener('click', tryKey);
+  key.addEventListener('keydown', function(e){ if(e.key==='Enter') tryKey(); });
+  key.addEventListener('input', function(){ keyform.classList.remove('err'); keymsg.textContent=''; });
+  out.addEventListener('click', signOut);
+})();
+</script>
+
+<!-- Baton 评论层加载器 · /preview 出稿时整段内联到原型 </body> 前 -->
+<!-- 评论数据在 comments/threads.jsonl（独立板块，不写进原型本体）；本段只负责读取渲染与投递 -->
+<style data-baton-loader-css>
+.bt-pin{position:absolute;z-index:9990;width:22px;height:22px;border-radius:11px 11px 11px 3px;background:#4f46e5;color:#fff;font:600 11px/22px -apple-system,sans-serif;text-align:center;cursor:pointer;box-shadow:0 2px 8px rgba(79,70,229,.35);border:0}
+.bt-pin.bt-done{background:#94a3b8}
+.bt-hl{outline:2px solid #4f46e5;outline-offset:3px;border-radius:6px}
+.bt-fab{position:fixed;right:18px;bottom:18px;z-index:9995;border:1px solid #e2e8f0;background:#fff;color:#334155;font:500 13px/1 -apple-system,sans-serif;padding:10px 14px;border-radius:999px;cursor:pointer;box-shadow:0 4px 16px rgba(15,23,42,.12)}
+.bt-fab.bt-on{background:#4f46e5;color:#fff;border-color:#4f46e5}
+.bt-panel{position:fixed;right:18px;bottom:64px;z-index:9996;width:340px;max-height:70vh;overflow:auto;background:#fff;border:1px solid #e2e8f0;border-radius:14px;box-shadow:0 12px 40px rgba(15,23,42,.18);font:13px/1.65 -apple-system,"PingFang SC",sans-serif;color:#1e293b;display:none}
+.bt-panel.bt-open{display:block}
+.bt-panel .bt-hd{padding:12px 14px;border-bottom:1px solid #f1f5f9;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+.bt-panel .bt-hd small{color:#94a3b8;font-weight:400}
+.bt-th{padding:12px 14px;border-bottom:1px solid #f8fafc;cursor:pointer}
+.bt-th:hover{background:#fafafa}
+.bt-th .bt-meta{color:#94a3b8;font-size:11.5px;margin-bottom:2px}
+.bt-th .bt-drift{color:#b45309;font-size:11.5px}
+.bt-ans{margin-top:8px;padding:8px 10px;background:#f5f5ff;border-radius:8px}
+.bt-ans .bt-meta{color:#6366f1}
+.bt-ans a{color:#4f46e5;text-decoration:none;font-size:12px;margin-right:10px}
+.bt-compose{padding:12px 14px}
+.bt-compose textarea{width:100%;box-sizing:border-box;height:72px;border:1px solid #e2e8f0;border-radius:8px;padding:8px;font:13px/1.5 inherit;resize:vertical}
+.bt-compose .bt-row{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+.bt-compose small{color:#94a3b8}
+.bt-compose button{border:0;background:#4f46e5;color:#fff;border-radius:8px;padding:7px 14px;font:500 12.5px/1 inherit;cursor:pointer}
+.bt-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:9999;background:#1e293b;color:#fff;font:12.5px/1 -apple-system,sans-serif;padding:10px 16px;border-radius:999px;opacity:0;transition:opacity .2s}
+.bt-toast.bt-show{opacity:1}
+</style>
+<script data-baton-loader>
+(function(){
+"use strict";
+var THREADS=[],HEALTH=null,MODE=false,PANEL=null,FAB=null;
+function $(s,r){return (r||document).querySelector(s)}
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function escap(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function toast(msg){var t=$('.bt-toast')||document.body.appendChild(el('div','bt-toast'));t.textContent=msg;t.classList.add('bt-show');clearTimeout(t._h);t._h=setTimeout(function(){t.classList.remove('bt-show')},2600)}
+
+function roots(){return THREADS.filter(function(t){return t.kind==='comment'})}
+function children(id){return THREADS.filter(function(t){return t.parent===id&&t.kind!=='status'})}
+var EFF={};
+function computeEff(){EFF={};var stat={},ans={};THREADS.forEach(function(t){if(t.kind==='status'&&t.parent)stat[t.parent]=t.status;if(t.kind==='answer'&&t.parent)ans[t.parent]=1});roots().forEach(function(t){EFF[t.id]=stat[t.id]||(ans[t.id]?'answered':(t.status||'open'))})}
+
+function renderPins(){
+  document.querySelectorAll('.bt-pin').forEach(function(p){p.remove()});
+  var byBlock={};
+  roots().forEach(function(t){(byBlock[t.block]=byBlock[t.block]||[]).push(t)});
+  Object.keys(byBlock).forEach(function(b){
+    var host=document.querySelector('[data-baton-block="'+b+'"]');
+    if(!host)return;
+    if(getComputedStyle(host).position==='static')host.style.position='relative';
+    var list=byBlock[b];
+    var allDone=list.every(function(t){var s=EFF[t.id];return s==='resolved'||s==='archived'});
+    var pin=el('button','bt-pin'+(allDone?' bt-done':''),String(list.length));
+    pin.title=list.length+' 条评论';
+    pin.style.top='-8px';pin.style.right='-8px';
+    pin.addEventListener('click',function(ev){ev.stopPropagation();openPanel(b)});
+    host.appendChild(pin);
+  });
+}
+
+function threadHtml(t){
+  var kids=children(t.id);
+  var drift=!document.querySelector('[data-baton-block="'+t.block+'"]');
+  var h='<div class="bt-meta">'+escap(t.author||'?')+' · '+escap((t.ts||'').slice(0,10))+' · '+escap(t.block||'')+(EFF[t.id]?' · '+escap(EFF[t.id]):'')+'</div>'
+    +(drift?'<div class="bt-drift">⚠ 原区域已变更（评论仍保留）</div>':'')
+    +'<div>'+escap(t.body||'')+'</div>';
+  kids.forEach(function(k){
+    if(k.kind==='answer'){
+      var refs=(k.refs&&k.refs.ledger||[]).map(function(d){return '<a href="ledger/index.html#'+encodeURIComponent(d)+'">依据 · 台账 '+escap(d)+' ↗</a>'}).join('');
+      var ans=k.refs&&k.refs.answer?'<a href="'+escap(k.refs.answer)+'">查看推导 ↗</a>':'';
+      h+='<div class="bt-ans"><div class="bt-meta">AI 代答（只转述台账已有记载）</div><div>'+escap(k.body||'')+'</div>'+(refs||ans?'<div style="margin-top:6px">'+refs+ans+'</div>':'')+'</div>';
+    }else{
+      h+='<div class="bt-ans" style="background:#f8fafc"><div class="bt-meta" style="color:#64748b">'+escap(k.author||'?')+'</div><div>'+escap(k.body||'')+'</div></div>';
+    }
+  });
+  return h;
+}
+
+function openPanel(block,focusThread){
+  var p=ensurePanel();
+  var list=block?roots().filter(function(t){return t.block===block}):roots();
+  var body=list.map(function(t){return '<div class="bt-th" data-t="'+escap(t.id)+'">'+threadHtml(t)+'</div>'}).join('')||'<div class="bt-th" style="color:#94a3b8;cursor:default">还没有评论</div>';
+  var canWrite=!!HEALTH;
+  var compose=block&&canWrite
+    ?'<div class="bt-compose"><textarea placeholder="就这个区块说点什么… @AI 可召唤代答（只答台账有记载的）"></textarea><div class="bt-row"><small>'+escap(HEALTH.user||'')+' · 落 comments/threads.jsonl</small><button>发送</button></div></div>'
+    :(block?'<div class="bt-compose"><small>只读模式 · 装了伴侣（baton install + baton open）就能在这里评论</small></div>':'');
+  p.innerHTML='<div class="bt-hd"><span>'+(block?'评论 · '+escap(block):'全部评论')+'</span><small>'+roots().length+' 线程 · threads.jsonl</small></div>'+body+compose;
+  p.classList.add('bt-open');
+  if(focusThread){var n=p.querySelector('[data-t="'+focusThread+'"]');if(n){n.scrollIntoView();n.style.background='#f5f5ff'}}
+  var btn=p.querySelector('.bt-compose button');
+  if(btn)btn.addEventListener('click',function(){
+    var ta=p.querySelector('textarea');var v=(ta.value||'').trim();if(!v)return;
+    post(block,v).then(function(){ta.value='';toast(/@AI/i.test(v)?'已入库 · @AI 已召唤，代答会出现在这条线程里':'已入库 · 会按名册流转（没 @ 人时默认给持棒产品）');reload().then(function(){openPanel(block)})})
+      .catch(function(e){toast('发送失败：'+e.message)});
+  });
+}
+function ensurePanel(){
+  if(PANEL)return PANEL;
+  PANEL=document.body.appendChild(el('div','bt-panel'));
+  document.addEventListener('click',function(ev){
+    if(PANEL.classList.contains('bt-open')&&!PANEL.contains(ev.target)&&!ev.target.closest('.bt-pin,.bt-fab'))PANEL.classList.remove('bt-open');
+  });
+  return PANEL;
+}
+
+function post(block,body){
+  return fetch('/baton/comment',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({path:location.pathname,block:block,body:body})})
+    .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json()});
+}
+function reload(){
+  return fetch('comments/threads.jsonl',{cache:'no-store'}).then(function(r){return r.ok?r.text():''})
+    .then(function(txt){THREADS=txt.split('\n').filter(Boolean).map(function(l){try{return JSON.parse(l)}catch(e){return null}}).filter(Boolean);computeEff();renderPins()});
+}
+
+function enterMode(on){
+  MODE=on;FAB.classList.toggle('bt-on',on);
+  FAB.textContent=on?'✕ 退出评论模式':'💬 '+roots().length;
+  document.querySelectorAll('[data-baton-block]').forEach(function(b){
+    if(on){b.addEventListener('click',blockClick,true);b.style.cursor='context-menu'}
+    else{b.removeEventListener('click',blockClick,true);b.style.cursor=''}
+  });
+}
+function blockClick(ev){
+  if(!MODE)return;
+  ev.preventDefault();ev.stopPropagation();
+  openPanel(ev.currentTarget.getAttribute('data-baton-block'));
+}
+
+function boot(){
+  reload().then(function(){
+    return fetch('/baton/health',{cache:'no-store'}).then(function(r){return r.ok?r.json():null}).catch(function(){return null});
+  }).then(function(h){
+    HEALTH=h;
+    FAB=document.body.appendChild(el('button','bt-fab','💬 '+roots().length));
+    FAB.title=h?'评论模式：点任意区块直接评论':'只读评论';
+    FAB.addEventListener('click',function(){
+      if(HEALTH){enterMode(!MODE);if(!MODE)ensurePanel().classList.remove('bt-open')}
+      else openPanel(null);
+    });
+    var m=location.hash.match(/^#baton-block=(.+)$/);
+    if(m){var b=document.querySelector('[data-baton-block="'+decodeURIComponent(m[1])+'"]');
+      if(b){b.scrollIntoView({block:'center'});b.classList.add('bt-hl');
+        // 高亮保持到用户首次交互（700ms 后才挂监听，跳过 scrollIntoView 自己触发的滚动）；20s 兜底
+        var evs=['scroll','pointerdown','keydown'];
+        var clearHl=function(){b.classList.remove('bt-hl');evs.forEach(function(ev){window.removeEventListener(ev,clearHl,true)})};
+        setTimeout(function(){evs.forEach(function(ev){window.addEventListener(ev,clearHl,{capture:true,passive:true})})},700);
+        setTimeout(clearHl,20000)}}
+    var tm=location.hash.match(/^#baton-thread=(.+)$/);
+    if(tm){var id=decodeURIComponent(tm[1]);var t=THREADS.filter(function(x){return x.id===id})[0];
+      if(t)openPanel(t.block,id)}
+  }).catch(function(){/* file:// 或无评论板块：静默，原型不受影响 */});
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
+})();
+</script>
+</body>
+</html>
