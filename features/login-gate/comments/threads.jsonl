@@ -6,3 +6,4 @@
 {"id":"t-mte8f32jbt7q","kind":"status","parent":"t-mte3a94o17up","status":"resolved","by":"SeanMa27","note":"","ts":"2026-08-29T10:22:45.067Z"}
 {"id":"t-mte8f389gimq","feature":"login-gate","block":"b-brand","author":"SeanMa27","github":"SeanMa27","body":"与 t-mte3a94o17up 重复（同一条发了两次），已在那条统一答复并归档本条。","kind":"reply","parent":"t-mte3ab17k83n","status":"open","summon":null,"mentions":[],"ts":"2026-08-29T10:22:45.273Z"}
 {"id":"t-mte8f3dxott3","kind":"status","parent":"t-mte3ab17k83n","status":"archived","by":"SeanMa27","note":"","ts":"2026-08-29T10:22:45.477Z"}
+{"id":"t-mte8gcugu57o","feature":"login-gate","block":"b-admin-key","author":"SeanMa27","github":"SeanMa27","body":"这里的弱化是刻意的，不是没做完。D1 定了「体验直入」是主路径，D2 定了管理员和普通人共用同一入口——把管理入口做显眼，就会和主按钮抢第一屏，而绝大多数访问者不是管理员。管理员是低频、且清楚自己要干什么的角色，能找到就够，不需要被引导。所以保持现状：折叠态灰字下划线，点开才出输入框。记在台账 D5。","kind":"reply","parent":"t-mte3ayetw991","status":"open","summon":null,"mentions":[],"ts":"2026-08-29T10:23:44.392Z"}
