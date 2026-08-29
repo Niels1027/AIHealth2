@@ -58,11 +58,30 @@ if (op === 'answer') {
   if (fs.existsSync(li)) toCommit.push(rel(root, li));
 } else if (op === 'reply') {
   if (!flags.body) { console.error('缺 --body'); process.exit(1); }
+  // 代拟两段式（与 answer 同构）：页面只放两三行提炼（--ai-draft 标注代拟），
+  // 用户原话与完整推导落 answers/<线程id>.md（--derivation-file），拍板挂台账（--ledger D5）
+  const refs = {};
+  if (flags.ledger) refs.ledger = String(flags.ledger).split(',').map((s) => s.trim()).filter(Boolean);
+  if (flags['derivation-file']) {
+    const dst = path.join(dir, 'answers', `${threadId}.md`);
+    if (path.resolve(flags['derivation-file']) !== path.resolve(dst)) fs.copyFileSync(flags['derivation-file'], dst);
+    refs.answer = `answers/${threadId}.md`;
+    toCommit.push(rel(root, dst));
+  }
   record = { id: genId('t'), feature, block: target.block, author: meName,
     github: (team.roster.find((r) => r.name === meName) || {}).github || me.github,
     body: flags.body, kind: 'reply', parent: threadId, status: 'open', summon: null, mentions: [], ts: nowIso() };
+  if (Object.keys(refs).length) record.refs = refs;
+  if (flags['ai-draft']) record.drafted = 'ai';
   summary = `baton(reply): ${feature} ${threadId} by ${meName}`;
   appendJsonl(file, record);
+  if (refs.ledger && refs.ledger.length) {
+    // 台账被引用计数变了 → 重渲染
+    const { spawnSync } = await import('node:child_process');
+    spawnSync(process.execPath, [path.join(root, '.baton/scripts/render-ledger.mjs'), feature], { encoding: 'utf8' });
+    const li = path.join(dir, 'ledger', 'index.html');
+    if (fs.existsSync(li)) toCommit.push(rel(root, li));
+  }
 } else if (op === 'status') {
   const st = statusArg;
   if (!['resolved', 'archived', 'open'].includes(st)) { console.error('状态只能是 resolved / archived / open'); process.exit(1); }

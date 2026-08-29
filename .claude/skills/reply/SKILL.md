@@ -45,7 +45,7 @@ description: Baton 处理评论。当产品说「/reply / 处理评论 / 看看�
 
 对每条待处置评论，展示原文 + 所在区块 + 已有代答，然后 AskUserQuestion：
 
-1. **「你说观点，我来代拟回帖」**——用户口述 → 你拟正式回帖文字给他过目 → `thread-update.mjs reply … --by <用户称呼>` → `status … resolved`
+1. **「你说观点，我来代拟回帖」**——用户口述 → 你拟**两三行提炼稿**给他过目（**不过目不发**；正文只放提炼，不贴长文）→ 过目通过后：用户原话 + 完整推导写 `answers/<线程id>.md`，再 `thread-update.mjs reply … --by <用户称呼> --ai-draft --derivation-file <该文件> [--ledger D<n>]`（页面显示「AI 代拟」标注 + 「原话与完整理由 ↗」）→ `status … resolved`
 2. **「采纳，改原型」**——三合一：改 index.html 对应区块（沿用旧锚点 id）→ 若含新拍板则 `ledger-append.mjs` 入账 → 回帖说明采纳了什么 → `status … resolved`。原型改动先留在工作区，最后一步统一发新版
 3. **「不改，说明理由」**——用户给理由 → 回帖 + 入台账（这是「为什么没选 X」的正式记录）→ `status … resolved`
 4. **「跳过，下次再说」**——什么都不动，线程保持 open

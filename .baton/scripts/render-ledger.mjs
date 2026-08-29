@@ -89,7 +89,14 @@ a{color:var(--accent);text-decoration:none}
 a:hover{text-decoration:underline}
 .src{color:var(--mut)}
 .empty{color:var(--mut);text-align:center;padding:70px 0;font-size:14px}
-</style></head><body><div class="wrap">
+.pgtabs{position:fixed;top:14px;left:14px;z-index:60;display:flex;gap:2px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:3px;font-size:12.5px;box-shadow:0 2px 10px rgba(28,25,23,.07)}
+.pgtabs a,.pgtabs b{padding:5px 14px;border-radius:999px;font-weight:400}
+.pgtabs b{background:var(--ink);color:#fff}
+.pgtabs a{color:var(--mut)}
+.pgtabs a:hover{color:var(--ink);background:var(--bg);text-decoration:none}
+</style></head><body>
+<nav class="pgtabs" aria-label="页面切换"><a href="../index.html">原型</a><b>台账</b></nav>
+<div class="wrap">
 <h1>${esc(task ? task.title : feature)} · 决策台账</h1>
 <div class="sub">${entries.length} 条 · 生成于 ${day(nowIso())}${task ? ' · 原型 ' + esc(task.version) : ''} · <a href="../index.html">打开原型 ↗</a></div>
 <div class="note">本页由 Baton 自动生成，入账即重渲染，手工编辑会被覆盖。拍板在对话里说，AI 提炼入账；纠错也在对话里说（如「D9 记错了」）。</div>

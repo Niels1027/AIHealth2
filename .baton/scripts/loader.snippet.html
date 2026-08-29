@@ -140,7 +140,7 @@ function ensureSide(){
     if(act==='mode'){SEND_MODE=SEND_MODE==='batch'?'instant':'batch';store('send',SEND_MODE);renderSide();toast(SEND_MODE==='batch'?'已切换：攒一轮再发':'已切换：逐条即发');return}
     if(ev.target.classList&&ev.target.classList.contains('bt-x')){toggleSide(false);return}
     var item=ev.target.closest&&ev.target.closest('.bt-item[data-b]');
-    if(item)hlBlock(item.getAttribute('data-b'));
+    if(item){hlBlock(item.getAttribute('data-b'));openPanel(item.getAttribute('data-b'),item.getAttribute('data-t'))}
   });
   return SIDE;
 }
@@ -182,7 +182,10 @@ function threadHtml(t){
       var ans=k.refs&&k.refs.answer?'<a href="'+escap(k.refs.answer)+'">查看推导 ↗</a>':'';
       h+='<div class="bt-ans"><div class="bt-meta">AI 代答（只转述台账已有记载）</div><div>'+escap(k.body||'')+'</div>'+(refs||ans?'<div style="margin-top:6px">'+refs+ans+'</div>':'')+'</div>';
     }else{
-      h+='<div class="bt-ans" style="background:#f8fafc"><div class="bt-meta" style="color:#64748b">'+escap(k.author||'?')+'</div><div>'+escap(k.body||'')+'</div></div>';
+      var chip=k.drafted==='ai'?' · AI 代拟':'';
+      var refs2=(k.refs&&k.refs.ledger||[]).map(function(d){return '<a href="ledger/index.html#'+encodeURIComponent(d)+'">依据 · 台账 '+escap(d)+' ↗</a>'}).join('');
+      var full=k.refs&&k.refs.answer?'<a href="'+escap(k.refs.answer)+'">原话与完整理由 ↗</a>':'';
+      h+='<div class="bt-ans" style="background:#f8fafc"><div class="bt-meta" style="color:#64748b">'+escap(k.author||'?')+chip+'</div><div>'+escap(k.body||'')+'</div>'+(refs2||full?'<div style="margin-top:6px">'+refs2+full+'</div>':'')+'</div>';
     }
   });
   return h;
