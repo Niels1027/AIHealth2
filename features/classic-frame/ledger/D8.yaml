@@ -1,0 +1,11 @@
+# Baton 决策台账条目（AI 从对话/评论提炼；纠错在对话里说，不手编此文件）
+id: D8
+feature: classic-frame
+title: 模型设置页按钮文案「测试连接」→「测试」
+conclusion: ModelSettings.tsx 的「测试连接」按钮改为「测试」。这是本轮唯一的文案改动，属 D4 的例外——纯精简、不改语言不改语义，与它旁边的「保存」等长，读起来更齐。注意它不在「圆角对照总表」里，研发照那张表改会漏掉，已在 b-settings-actions 的标注中单独点名。
+decidedBy: SeanMa27
+source:
+  kind: comment
+  ref: t-mteishb8j83h
+anchors: [b-settings-actions]
+ts: 2026-08-29T15:36:13.174Z

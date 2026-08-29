@@ -1,0 +1,12 @@
+# Baton 决策台账条目（AI 从对话/评论提炼；纠错在对话里说，不手编此文件）
+id: D7
+feature: classic-frame
+title: 身份切换按钮文案本轮不改（维持「用户 / 管理员」）
+conclusion: Niels1027 建议把「用户」改成「User」。不改，主要理由是语言一致性：产品全站中文（宋体 + 纸感），单独一个身份按钮改英文会破坏统一，且「用户 / 管理员」是成对出现的，只改一个更不齐。次要理由是本轮为纯圆角改造，文案改动只开了 D8 那一处精简的口子（同为中文、不改语义），改语言与之性质不同。语言层面的调整另开功能整体考虑。
+decidedBy: SeanMa27
+source:
+  kind: comment
+  ref: t-mtehzoe2ndgo
+anchors: [b-circle-keep]
+ts: 2026-08-29T15:23:50.665Z
+amendedAt: 2026-08-29T15:36:13.351Z

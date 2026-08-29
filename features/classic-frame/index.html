@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="baton-version" content="v0.2">
+<meta name="baton-version" content="v0.3">
 <title>核心页 · 古典版框改造</title>
 <style>
 :root{
   --paper:#fbfbf9; --card:#ffffff; --ink:#1f2725; --pen:#6b7470; --faint:#98a19c;
   --moss:#2f6d5a; --moss-deep:#245748; --mist:#ecf3ef; --line:#e5e7e3; --warn:#b4552d;
-  /* 本次新增：版框外线，比 --line 重一档，用于「外重内轻」的文武边 */
+  /* 章级容器的边线，比控件的 --line 重一档：层级靠深浅分，不靠加线 */
   --line-strong:#cfd5d0;
   --sans:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Segoe UI",sans-serif;
   --song:"Songti SC","STSong","SimSun","Source Han Serif SC",serif;
@@ -88,8 +88,7 @@ pre.css{background:#f4f5f2;border-left:2px solid var(--line-strong);padding:12px
 .pane-old{--r-2xl:16px;--r-xl:12px;--r-lg:8px;--r-md:6px;--r-sm:4px;--r-full:999px}
 
 .c-sect{background:var(--card);border:1px solid var(--line);border-radius:var(--r-2xl);padding:18px}
-.pane-new .c-sect{border-color:var(--line-strong);
-  box-shadow:inset 0 0 0 3px var(--card),inset 0 0 0 4px var(--line);padding:21px}
+.pane-new .c-sect{border-color:var(--line-strong)}
 .c-sect h4{margin:0;font-size:13px;font-weight:600}
 
 .c-btn{display:inline-flex;align-items:center;gap:6px;background:var(--card);
@@ -223,13 +222,13 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.7;
 <section data-baton-view="overview" class="on">
   <div data-baton-block="b-overview">
     <h1>核心页 · 古典版框改造</h1>
-    <p class="lead">把「健康问书」三个核心页的圆角全部归零，卡片改用古籍版框式细线。目标是让界面的形态跟上它已有的纸感、苔绿与宋体，读起来像一本书而不像一个 SaaS 后台。</p>
+    <p class="lead">把「健康问书」三个核心页的圆角全部归零，卡片改用古籍版框式的直角细边。目标是让界面的形态跟上它已有的纸感、苔绿与宋体，读起来像一本书而不像一个 SaaS 后台。</p>
 
     <div class="meta">
-      <span>版本 <b>v0.2</b></span>
+      <span>版本 <b>v0.3</b></span>
       <span>日期 <b>2026-08-29</b></span>
       <span>出稿 <b>SeanMa27</b></span>
-      <span>状态 <b>已交接 v0.2</b></span>
+      <span>状态 <b>已交接 v0.3</b></span>
     </div>
 
     <h3>改动范围</h3>
@@ -238,7 +237,7 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.7;
     <h3>视图目录</h3>
     <table class="t">
       <tr><th>视图</th><th>看什么</th></tr>
-      <tr><td>版框体系</td><td>双线版框怎么画、哪些元素保留圆形、去圆角后为什么要补线补竖条</td></tr>
+      <tr><td>版框体系</td><td>章级容器的线怎么画、哪些元素保留圆形、去圆角后为什么要补线补竖条</td></tr>
       <tr><td>聊天页</td><td>侧栏 / 空态 / 气泡 / 回答与来源卡 / 输入框 / 错误态，逐块左现状右改后</td></tr>
       <tr><td>知识库管理页</td><td>无权限卡 / 运行状态章 / 导入章（两个 tab + 拖拽态）/ 文档列表四态</td></tr>
       <tr><td>模型设置页</td><td>表单字段 / 向量化分段控件 / 操作按钮组 / 测试结果块</td></tr>
@@ -249,10 +248,11 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.7;
     <table class="t">
       <tr><th>D 号</th><th>结论</th></tr>
       <tr><td class="n">D1</td><td>方向取「全直角 + 版框细线」，不走微圆角、不走切角</td></tr>
-      <tr><td class="n">D2</td><td>双线版框只给章级容器；控件（按钮/输入框/列表项/来源卡）用单线直角</td></tr>
+      <tr><td class="n">D2</td><td><s>双线版框只给章级容器</s> —— v0.3 由 D6 取代；控件用单线直角这一半仍然有效</td></tr>
       <tr><td class="n">D3</td><td>圈点保留圆形——状态点、回答者标记点不参与归零；胶囊类（引用号、身份切换、进度条）跟着归零</td></tr>
       <tr><td class="n">D4</td><td>本轮只动圆角与版框，阴影一律不动</td></tr>
       <tr><td class="n">D5</td><td>用户气泡去掉指向性圆角后，补一条右侧苔绿竖线代替</td></tr>
+      <tr><td class="n">D6</td><td>章级容器用<b>单线</b>直角，线色比控件重一档（<code>--color-line-strong</code>）——层级靠深浅不靠条数，取代 D2 的双线画法</td></tr>
     </table>
 
     <h3>阅读体例</h3>
@@ -265,7 +265,7 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.7;
   <h1>画法与取舍</h1>
   <p class="lead">三件事定下来，后面三个页面都是机械替换：版框怎么画、什么不归零、去掉圆角后哪里需要补偿。</p>
 
-  <h2>一、双线版框：外重内轻</h2>
+  <h2>一、版框细线：单线直角，层级靠深浅</h2>
   <div data-baton-block="b-frame-token">
     <div class="cmp">
       <div>
@@ -278,7 +278,7 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.7;
         </div></div>
       </div>
       <div>
-        <div class="cmp-h new"><span class="k">改后</span> 直角 + 双线版框</div>
+        <div class="cmp-h new"><span class="k">改后</span> 直角 + 单线（线色重一档）</div>
         <div class="stage"><div class="pane pane-new">
           <div class="c-sect">
             <h4>运行状态</h4>
@@ -289,23 +289,26 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.7;
     </div>
     <div class="note">
       <dl>
-        <dt>是什么</dt><dd>章级容器的边框：外线 1px <code>#cfd5d0</code>，留白 3px，内线 1px <code>#e5e7e3</code>。对应古籍版框的「文武边」，外重内轻。</dd>
-        <dt>交互</dt><dd>无。纯静态边框，不随悬停/聚焦变化。</dd>
-        <dt>数据来源</dt><dd>外线是本次新增的 token <code>--color-line-strong</code>，加进 <code>globals.css</code> 的 <code>@theme</code>；内线复用现有 <code>--color-line</code>。</dd>
-        <dt>对应拍板</dt><dd><span class="d">D2</span> 双线只给章级容器</dd>
-        <dt>边界</dt><dd>内边距要从 <code>p-5</code>（20px）加到 21px 左右，否则内线会贴住正文。窄屏下版框照常，不降级。</dd>
+        <dt>是什么</dt><dd>章级容器的边框：直角、<b>单线</b> 1px <code>#cfd5d0</code>。它比控件用的 <code>--color-line</code>（<code>#e5e7e3</code>）重一档——层级靠线的<b>深浅</b>区分，不靠加线的<b>条数</b>。</dd>
+        <dt>交互</dt><dd>无。静态边框，不随悬停/聚焦变化。</dd>
+        <dt>数据来源</dt><dd>新增 token <code>--color-line-strong</code>，加进 <code>globals.css</code> 的 <code>@theme</code>；控件继续用现有 <code>--color-line</code>。</dd>
+        <dt>对应拍板</dt><dd><span class="d">D6</span> 章级容器用单线（取代 D2 的双线画法）</dd>
+        <dt>边界</dt><dd>内边距沿用现网 <code>p-5</code>，不需要额外加。窄屏下不降级。</dd>
       </dl>
     </div>
     <pre class="css">/* globals.css @theme 新增一个 token */
 --color-line-strong: #cfd5d0;
 
-/* 章级容器：外 1px + 3px 留白 + 内 1px */
-.frame {
-  border: 1px solid var(--color-line-strong);
-  box-shadow: inset 0 0 0 3px var(--color-card),
-              inset 0 0 0 4px var(--color-line);
-}
-/* 用法：把现网的 rounded-2xl border border-line 换成 border-0 frame */</pre>
+/* 章级容器：直角单线，比控件的线重一档 */
+.frame { border: 1px solid var(--color-line-strong); }
+
+/* 用法：rounded-2xl border-line → border-line-strong（去圆角、换线色）
+   控件不动线色，继续用 border-line */</pre>
+    <div class="note" style="border-left-color:var(--moss)">
+      <dl>
+        <dt>改过</dt><dd>v0.2 这里是<b>双线版框</b>（外 1px + 3px 留白 + 内 1px，仿古籍文武边）。Niels1027 在这个区块提「这个方形的不好」，沟通后确认是双线那圈线过重、在小卡片上显得脏。v0.3 收成单线，直角方向（D1）不变。留档见台账 <span class="d">D2</span> → <span class="d">D6</span>。</dd>
+      </dl>
+    </div>
   </div>
 
   <h2>二、什么不归零：圈点保留圆形</h2>
@@ -481,7 +484,7 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.7;
     </div>
     <div class="note">
       <dl>
-        <dt>是什么</dt><dd>四张示例问题卡 <code>rounded-xl</code> → 直角。卡片本身是控件不是章节，用单线，不上版框。</dd>
+        <dt>是什么</dt><dd>四张示例问题卡 <code>rounded-xl</code> → 直角。卡片本身是控件不是章节，线色沿用控件的浅线，不用章级的重线。</dd>
         <dt>交互</dt><dd>点击直接发起该问题；悬停边框转苔绿、文字转深苔。行为不变。</dd>
         <dt>数据来源</dt><dd>四条问题写死在 <code>ChatApp.tsx</code> 的 <code>SAMPLE_QUESTIONS</code>，本次不改内容。</dd>
         <dt>对应拍板</dt><dd><span class="d">D2</span></dd>
@@ -605,10 +608,10 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.7;
     </div>
     <div class="note">
       <dl>
-        <dt>是什么</dt><dd>输入框容器 <code>rounded-2xl</code>、发送键 <code>rounded-xl</code>、错误条 <code>rounded-lg</code> 全部归零。输入框容器是控件，<b>不上双线版框</b>。</dd>
+        <dt>是什么</dt><dd>输入框容器 <code>rounded-2xl</code>、发送键 <code>rounded-xl</code>、错误条 <code>rounded-lg</code> 全部归零。输入框容器是控件，线色沿用控件的浅线，<b>不用章级的重线</b>。</dd>
         <dt>交互</dt><dd>聚焦时容器边框转苔绿（<code>focus-within</code>）；输入为空或请求中发送键置灰不可点；Enter 发送、Shift+Enter 换行。全部不变。</dd>
         <dt>数据来源</dt><dd>错误文案来自 <code>/api/chat</code> 的 error 事件或网络异常兜底。</dd>
-        <dt>对应拍板</dt><dd><span class="d">D2</span> 控件不上版框 · <span class="d">D4</span> 容器阴影 <code>0 1px 3px</code> 保留不动</dd>
+        <dt>对应拍板</dt><dd><span class="d">D2</span> 控件与章级分档 · <span class="d">D4</span> 容器阴影 <code>0 1px 3px</code> 保留不动</dd>
         <dt>边界</dt><dd>textarea 高度 40→160px 自增，超过后内部滚动；直角下滚动条与边框贴合，无需额外裁切。</dd>
       </dl>
     </div>
@@ -618,7 +621,7 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.7;
 <!-- ═══════════ 知识库管理页 ═══════════ -->
 <section data-baton-view="admin">
   <h1>知识库管理页</h1>
-  <p class="lead">这一页是双线版框的主场——三个 <code>rounded-2xl</code> 章级容器（运行状态 / 导入内容 / 已导入文档）正好对应古籍的三「章」。</p>
+  <p class="lead">这一页是章级线色的主场——三个 <code>rounded-2xl</code> 章级容器（运行状态 / 导入内容 / 已导入文档）正好对应古籍的三「章」。</p>
 
   <h2>无权限卡</h2>
   <div data-baton-block="b-admin-noauth">
@@ -633,7 +636,7 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.7;
         </div></div>
       </div>
       <div>
-        <div class="cmp-h new"><span class="k">改后</span> 直角双线版框</div>
+        <div class="cmp-h new"><span class="k">改后</span> 直角单线（线色重一档）</div>
         <div class="stage"><div class="pane pane-new">
           <div class="c-sect" style="max-width:300px;margin:0 auto;text-align:center">
             <p style="margin:0;font-size:13px;color:var(--pen)">知识库管理需要管理员身份</p>
@@ -644,10 +647,10 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.7;
     </div>
     <div class="note">
       <dl>
-        <dt>是什么</dt><dd>非管理员进入 <code>/admin</code> 时的拦截卡。属章级容器，上双线版框；里面的按钮是控件，直角无框线。</dd>
+        <dt>是什么</dt><dd>非管理员进入 <code>/admin</code> 时的拦截卡。属章级容器，边线用重一档的 <code>--color-line-strong</code>；里面的按钮是控件，直角无框线。</dd>
         <dt>交互</dt><dd>点「切换为管理员」写 <code>hr_role</code> cookie 并就地重渲染。行为不变。</dd>
         <dt>数据来源</dt><dd>身份来自 <code>shared.ts</code> 的 <code>useRole</code>（cookie 开关，现网无真实登录）。</dd>
-        <dt>对应拍板</dt><dd><span class="d">D2</span> 章级上版框</dd>
+        <dt>对应拍板</dt><dd><span class="d">D6</span> 章级用单线重一档</dd>
         <dt>边界</dt><dd>登录能力由已交接的 login-gate 负责，本轮不碰；两者落地顺序不互相阻塞。</dd>
       </dl>
     </div>
@@ -690,7 +693,7 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.7;
     <p class="sub" style="margin-top:8px">改后帧顺带展示了两个非理想态：回答模型缺密钥（橙圈点 + 明细行）、索引签名为空。</p>
     <div class="note">
       <dl>
-        <dt>是什么</dt><dd>章级容器上双线版框；右上「重建全部索引」是控件，<code>rounded-lg</code> → 直角单线。四个状态项本身无容器，不受影响。</dd>
+        <dt>是什么</dt><dd>章级容器边线重一档；右上「重建全部索引」是控件，<code>rounded-lg</code> → 直角单线。四个状态项本身无容器，不受影响。</dd>
         <dt>交互</dt><dd>点「重建全部索引」弹原生 confirm 后调 <code>/api/reindex</code>。行为不变。</dd>
         <dt>数据来源</dt><dd><code>/api/health</code>：<code>embedding</code> / <code>chat</code> / <code>indexSignature</code> / <code>stats</code>，每 10 秒轮询一次。</dd>
         <dt>对应拍板</dt><dd><span class="d">D2</span> · <span class="d">D3</span> 三态圈点保留圆形</dd>
@@ -802,7 +805,7 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.7;
         </div></div>
       </div>
       <div>
-        <div class="cmp-h new"><span class="k">改后</span> 章上双线版框，条目内全直角</div>
+        <div class="cmp-h new"><span class="k">改后</span> 章级单线重一档，条目内全直角</div>
         <div class="stage"><div class="pane pane-new">
           <div class="c-sect">
             <h4>已导入文档</h4>
@@ -848,7 +851,7 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.7;
     </div>
     <div class="note">
       <dl>
-        <dt>是什么</dt><dd>章级双线版框；条目内三处圆角归零——来源标签 <code>rounded</code>(4px)、删除键 <code>rounded-md</code>、进度条 <code>rounded-full</code> 变方头。条目之间的分隔线沿用现网 <code>divide-y</code>。</dd>
+        <dt>是什么</dt><dd>章级容器边线重一档；条目内三处圆角归零——来源标签 <code>rounded</code>(4px)、删除键 <code>rounded-md</code>、进度条 <code>rounded-full</code> 变方头。条目之间的分隔线沿用现网 <code>divide-y</code>。</dd>
         <dt>交互</dt><dd>删除弹 confirm；失败条目点「重试」调 reprocess；处理中每 2.5 秒轮询刷新进度。全部不变。</dd>
         <dt>数据来源</dt><dd><code>/api/documents</code> 的 <code>title</code> / <code>source</code> / <code>status</code> / <code>progress</code> / <code>chunk_count</code> / <code>char_count</code> / <code>created_at</code>。</dd>
         <dt>对应拍板</dt><dd><span class="d">D2</span> · <span class="d">D3</span> 进度条属胶囊类，归零</dd>
@@ -879,7 +882,7 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.7;
         </div></div>
       </div>
       <div>
-        <div class="cmp-h new"><span class="k">改后</span> 章上双线版框，表单件直角</div>
+        <div class="cmp-h new"><span class="k">改后</span> 章级单线重一档，表单件直角</div>
         <div class="stage"><div class="pane pane-new">
           <div class="c-sect">
             <div class="row" style="justify-content:space-between;align-items:baseline"><h4>模型配置</h4><span class="mini">保存后立即生效，无需重启服务</span></div>
@@ -967,7 +970,7 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.7;
         <div class="cmp-h new"><span class="k">改后</span> 全直角</div>
         <div class="stage"><div class="pane pane-new">
           <div class="row" style="gap:8px">
-            <button class="c-btn"><svg class="i"><use href="#i-plug"/></svg>测试连接</button>
+            <button class="c-btn"><svg class="i"><use href="#i-plug"/></svg>测试</button>
             <button class="c-btn c-btn-pri"><svg class="i"><use href="#i-save"/></svg>保存</button>
             <button class="c-btn" style="border:0;margin-left:auto;font-size:12px;color:var(--faint)"><svg class="i" style="width:12px;height:12px"><use href="#i-refresh"/></svg>恢复 .env 默认</button>
           </div>
@@ -981,7 +984,7 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.7;
     <div class="states" style="margin-top:16px">
       <div>
         <div class="stage"><div class="pane pane-new"><div class="row" style="gap:8px">
-          <button class="c-btn c-btn-dis"><svg class="i"><use href="#i-spin"/></svg>测试连接</button>
+          <button class="c-btn c-btn-dis"><svg class="i"><use href="#i-spin"/></svg>测试</button>
           <button class="c-btn c-btn-dis"><svg class="i"><use href="#i-spin"/></svg>保存</button></div></div></div>
         <div class="st-lab">请求中（两键置灰）</div>
       </div>
@@ -992,11 +995,16 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.7;
     </div>
     <div class="note">
       <dl>
-        <dt>是什么</dt><dd>三个操作按钮 <code>rounded-lg</code>、测试结果块 <code>rounded-lg</code> 归零。结果块是控件产物不是章节，用单线。</dd>
-        <dt>交互</dt><dd>测试连接逐项返回 ok/失败与耗时；保存后按 <code>embeddingChanged</code> 决定提示文案。不变。</dd>
+        <dt>是什么</dt><dd>三个操作按钮 <code>rounded-lg</code>、测试结果块 <code>rounded-lg</code> 归零。结果块是控件产物不是章节，用控件的浅线。<b>另有一处文案改动</b>：「测试连接」→「测试」。</dd>
+        <dt>交互</dt><dd>测试逐项返回 ok/失败与耗时；保存后按 <code>embeddingChanged</code> 决定提示文案。不变。</dd>
         <dt>数据来源</dt><dd><code>POST /api/settings/test</code> 返回 <code>results[]</code>（label / ok / detail / ms）。</dd>
-        <dt>对应拍板</dt><dd><span class="d">D2</span></dd>
+        <dt>对应拍板</dt><dd><span class="d">D2</span> 控件与章级分档 · <span class="d">D8</span> 文案「测试连接」→「测试」</dd>
         <dt>边界</dt><dd>结果块里成功与失败混排的样子已在改后帧展示；任一请求进行中时三个按钮同时置灰。</dd>
+      </dl>
+    </div>
+    <div class="note" style="border-left-color:var(--moss)">
+      <dl>
+        <dt>改过</dt><dd>v0.3 新增：按钮文案「测试连接」→「测试」（<code>ModelSettings.tsx:338</code>）。<b>这是本轮唯一的文案改动</b>，不在「圆角对照总表」里，照那张表改会漏掉它。来源见台账 <span class="d">D8</span>。</dd>
       </dl>
     </div>
   </div>
@@ -1011,7 +1019,7 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.7;
   <div data-baton-block="b-radius-table">
     <table class="t">
       <tr><th>现网 class</th><th>实际值</th><th>出现处</th><th>改后</th></tr>
-      <tr><td class="n">rounded-2xl</td><td class="n">16px</td><td>管理页三个章级 section、模型配置 section、无权限卡、聊天输入框容器、用户气泡</td><td>章级 → <code>frame</code> 双线版框；输入框容器与气泡 → 直角单线</td></tr>
+      <tr><td class="n">rounded-2xl</td><td class="n">16px</td><td>管理页三个章级 section、模型配置 section、无权限卡、聊天输入框容器、用户气泡</td><td>章级 → 直角 + <code>border-line-strong</code>；输入框容器与气泡 → 直角 + <code>border-line</code></td></tr>
       <tr><td class="n">rounded-xl</td><td class="n">12px</td><td>发送键、示例问题卡、拖拽上传区、粘贴文本 textarea</td><td class="n">0</td></tr>
       <tr><td class="n">rounded-lg</td><td class="n">8px</td><td>新对话按钮、侧栏对话项、来源卡、错误条、tab 组容器、全部输入框（<code>inputCls</code>）、全部操作按钮、测试结果块、重建索引键</td><td class="n">0</td></tr>
       <tr><td class="n">rounded-md</td><td class="n">6px</td><td>tab 激活项 ×2、文档删除键</td><td>0；激活项另补 <code>border 1px</code> 替掉阴影</td></tr>
@@ -1029,7 +1037,7 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.7;
       <tr><td class="n">:focus-visible</td><td class="n">border-radius: 4px</td><td class="n">0</td><td>焦点环跟着控件变方，否则方框配圆环</td></tr>
       <tr><td class="n">.answer-prose code</td><td class="n">border-radius: 4px</td><td class="n">0</td><td>回答正文里的行内代码底</td></tr>
       <tr><td class="n">.cite-pill</td><td class="n">border-radius: 999px</td><td>0 + <code>border:1px solid var(--color-moss)</code></td><td>归零后补描边，避免与正文数字混淆</td></tr>
-      <tr><td class="n">@theme</td><td>—</td><td>新增 <code>--color-line-strong: #cfd5d0</code></td><td>版框外线，全站唯一新增 token</td></tr>
+      <tr><td class="n">@theme</td><td>—</td><td>新增 <code>--color-line-strong: #cfd5d0</code></td><td>章级容器边线（比控件重一档），全站唯一新增 token</td></tr>
     </table>
     <div class="note">
       <dl>
@@ -1043,9 +1051,9 @@ svg.i{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.7;
   <div data-baton-block="b-impl-order">
     <table class="t">
       <tr><th>步</th><th>做什么</th><th>为什么是这个顺序</th></tr>
-      <tr><td class="n">1</td><td><code>globals.css</code>：加 <code>--color-line-strong</code>、加 <code>.frame</code> 工具类、改三处硬编码圆角</td><td>先把 token 与工具类立住，后面全是类名替换</td></tr>
+      <tr><td class="n">1</td><td><code>globals.css</code>：加 <code>--color-line-strong</code>、改三处硬编码圆角</td><td>先把 token 立住，后面全是类名替换</td></tr>
       <tr><td class="n">2</td><td>三个页面按上表批量替换 <code>rounded-*</code>；<b>先手工挑出 7 处保留的 <code>rounded-full</code></b></td><td>圈点与胶囊类名完全相同，全局替换会误伤，必须先挑出来</td></tr>
-      <tr><td class="n">3</td><td>章级容器换 <code>frame</code>，内边距 <code>p-5</code> → <code>p-[21px]</code></td><td>不加内边距内线会贴正文</td></tr>
+      <tr><td class="n">3</td><td>章级容器边框换 <code>border-line-strong</code>（控件保持 <code>border-line</code>）</td><td>层级靠线的深浅，内边距沿用 <code>p-5</code> 不动</td></tr>
       <tr><td class="n">4</td><td>三处补偿：气泡右竖线、引用号描边、两个 tab 激活项换 1px 线</td><td>这三处是去圆角掉的信息，补完才算完成</td></tr>
     </table>
     <div class="note">

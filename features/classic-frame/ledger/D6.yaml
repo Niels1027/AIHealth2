@@ -1,0 +1,11 @@
+# Baton 决策台账条目（AI 从对话/评论提炼；纠错在对话里说，不手编此文件）
+id: D6
+feature: classic-frame
+title: 章级容器改用单线直角，取代 D2 的双线版框
+conclusion: 双线版框（外 1px + 3px 留白 + 内 1px）在小卡片上过重显脏，收成单线：章级容器 border 1px --color-line-strong (#cfd5d0)，比控件的 --color-line (#e5e7e3) 重一档——层级靠线的深浅区分，不靠条数。内边距沿用现网 p-5，不再需要加到 21px。D1 的全直角方向不变；D2 中「控件用单线直角」那一半仍然有效。
+decidedBy: SeanMa27
+source:
+  kind: comment
+  ref: t-mtehxcztddhw
+anchors: [b-frame-token, b-admin-status, b-admin-noauth]
+ts: 2026-08-29T15:23:27.853Z
