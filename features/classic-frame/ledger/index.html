@@ -30,12 +30,18 @@ a:hover{text-decoration:underline}
 <nav class="pgtabs" aria-label="页面切换"><a href="../index.html">原型</a><b>台账</b></nav>
 <div class="wrap">
 <h1>核心页 · 古典版框改造 · 决策台账</h1>
-<div class="sub">7 条 · 生成于 2026-08-29 · 原型 v0.2 · <a href="../index.html">打开原型 ↗</a></div>
+<div class="sub">8 条 · 生成于 2026-08-29 · 原型 v0.2 · <a href="../index.html">打开原型 ↗</a></div>
 <div class="note">本页由 Baton 自动生成，入账即重渲染，手工编辑会被覆盖。拍板在对话里说，AI 提炼入账；纠错也在对话里说（如「D9 记错了」）。</div>
+<article class="entry" id="D8">
+  <header><span class="chip">D8</span><h2>模型设置页按钮文案「测试连接」→「测试」</h2></header>
+  <p class="conclusion">ModelSettings.tsx 的「测试连接」按钮改为「测试」。这是本轮唯一的文案改动，属 D4 的例外——纯精简、不改语言不改语义，与它旁边的「保存」等长，读起来更齐。注意它不在「圆角对照总表」里，研发照那张表改会漏掉，已在 b-settings-actions 的标注中单独点名。</p>
+  <footer>拍板 SeanMa27 · 2026-08-29
+    <a href="../index.html#baton-thread=t-mteishb8j83h">评论原文 ↗</a> <a href="../index.html#baton-block=b-settings-actions">原型位置 · b-settings-actions ↗</a></footer>
+</article>
 <article class="entry" id="D7">
   <header><span class="chip">D7</span><h2>身份切换按钮文案本轮不改（维持「用户 / 管理员」）</h2></header>
-  <p class="conclusion">Niels1027 建议把「用户」改成「User」。本轮是纯圆角改造，D4 已定「字号、字重、间距、文案、接口一律不动」，改文案会把一个已交接的视觉改造扩成混合需求，也会让研发的替换清单失去边界。且产品全站中文（宋体 + 纸感），单独一个按钮改英文会破坏一致性。文案调整另开功能收。</p>
-  <footer>拍板 SeanMa27 · 2026-08-29
+  <p class="conclusion">Niels1027 建议把「用户」改成「User」。不改，主要理由是语言一致性：产品全站中文（宋体 + 纸感），单独一个身份按钮改英文会破坏统一，且「用户 / 管理员」是成对出现的，只改一个更不齐。次要理由是本轮为纯圆角改造，文案改动只开了 D8 那一处精简的口子（同为中文、不改语义），改语言与之性质不同。语言层面的调整另开功能整体考虑。</p>
+  <footer>拍板 SeanMa27 · 2026-08-29 · 已修正 2026-08-29
     <a href="../index.html#baton-thread=t-mtehzoe2ndgo">评论原文 ↗</a> <a href="../index.html#baton-block=b-circle-keep">原型位置 · b-circle-keep ↗</a></footer>
 </article>
 <article class="entry" id="D6">
@@ -51,8 +57,8 @@ a:hover{text-decoration:underline}
     <span class="src">出处 · AI 出稿时提出；/handoff 定稿 v0.2 前经 SeanMa27 逐条确认</span> <a href="../index.html#baton-block=b-chat-bubble">原型位置 · b-chat-bubble ↗</a> <a href="../index.html#baton-block=b-compensate">原型位置 · b-compensate ↗</a></footer>
 </article>
 <article class="entry" id="D4">
-  <header><span class="chip">D4</span><h2>本轮只动圆角与版框，阴影不动</h2></header>
-  <p class="conclusion">全部 shadow-* 保持现状（聊天输入框 0 1px 3px、卡片阴影等）。唯一例外：两处分段控件的激活项，现网靠 0 1px 2px 阴影浮起，直角下与新增的外框重复，改为 1px 实线；此例外已在原型标注中点明。字号、字重、间距、文案、接口一律不动。</p>
+  <header><span class="chip">D4</span><h2>本轮只动圆角与线；阴影与文案各开一处例外</h2></header>
+  <p class="conclusion">全部 shadow-* 保持现状（聊天输入框 0 1px 3px、卡片阴影等）。字号、字重、间距、接口一律不动。两处例外，都逐条记档、不得扩大：① 两处分段控件的激活项，现网靠 0 1px 2px 阴影浮起，直角下与外框重复，改为 1px 实线；② 文案仅「测试连接」→「测试」一处（见 D8），其余文案不动（见 D7）。</p>
   <footer>拍板 SeanMa27 · 2026-08-29 · 已修正 2026-08-29
     <span class="src">出处 · AI 出稿时提出；/handoff 定稿 v0.2 前经 SeanMa27 逐条确认</span> <a href="../index.html#baton-block=b-admin-import">原型位置 · b-admin-import ↗</a> <a href="../index.html#baton-block=b-css-table">原型位置 · b-css-table ↗</a></footer>
 </article>
