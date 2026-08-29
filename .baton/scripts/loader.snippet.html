@@ -206,7 +206,7 @@ function openPanel(block,focusThread){
     post('/baton/draft',{path:location.pathname,block:block,body:v}).then(function(r){
       ta.value='';toast(/@AI/i.test(v)?'已暂存 · @AI 将随本轮一起送达':'已暂存 · 本轮第 '+r.count+' 条（右侧可回看，最后一起发出）');
       return fetchDrafts();
-    }).then(function(){renderSide();if(!sideOpen())toggleSide(true)})
+    }).then(function(){p.classList.remove('bt-open');renderSide();if(!sideOpen())toggleSide(true)})
       .catch(function(e){toast('暂存失败：'+e.message)});
   });
 }
