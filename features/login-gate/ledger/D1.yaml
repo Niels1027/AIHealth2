@@ -3,9 +3,10 @@ id: D1
 feature: login-gate
 title: 登录方式 = 体验直入，不做注册与凭证
 conclusion: 登录页主入口是「开始体验」，点了直接进，不要手机号验证码、不要邮箱密码、不要注册流程。产品定位是书籍知识库演示，加凭证只会挡住第一次来的人。进入后的身份是「体验用户」，本机会话，不收集个人信息。
-decidedBy: Niels1027
+decidedBy: SeanMa27
 source:
   kind: session
   ref: /preview 开工时选型：登录方式四选一
 anchors: [b-enter, b-brand]
 ts: 2026-08-29T06:35:16.955Z
+amendedAt: 2026-08-29T07:18:19.786Z
