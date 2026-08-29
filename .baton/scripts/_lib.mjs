@@ -229,6 +229,13 @@ export function repoRoot(from = process.cwd()) {
   return r.stdout;
 }
 export function currentBranch(root) { return gitx(['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: root }); }
+
+// 仓库的能力版本（.baton/VERSION）。常驻伴侣拿它自报家门，open 拿它比对——
+// 进程加载的是启动那一刻的代码，git pull 不会让它变新，不比对就发现不了。
+export function repoVersion(root) {
+  const f = path.join(root, '.baton', 'VERSION');
+  try { return fs.readFileSync(f, 'utf8').trim() || null; } catch { return null; }
+}
 export function gitUserName(root) {
   const r = git(['config', 'user.name'], { cwd: root });
   return r.status === 0 && r.stdout ? r.stdout : 'unknown';

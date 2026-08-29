@@ -5,7 +5,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { parseArgs, repoRoot, readTeam, listFeatures, currentBranch, git, sh, openCmd } from './_lib.mjs';
+import { parseArgs, repoRoot, readTeam, listFeatures, currentBranch, git, sh, openCmd, repoVersion } from './_lib.mjs';
 
 const { flags, pos } = parseArgs(process.argv.slice(2));
 const root = repoRoot();
@@ -71,6 +71,21 @@ if (p1.kind === 'companion' && p1.h.root !== serveRoot) {
 if (p1.kind === 'other-http') {
   console.error(`端口 ${port} 被别的服务占用（返回 HTTP ${p1.status}，不是 Baton 伴侣）。换端口：${openCmd(root, feature, `--port ${port + 1}${flags.review ? ' --review' : ''}`)}`);
   process.exit(1);
+}
+// 版本闸：常驻进程加载的是启动那一刻的代码，git pull / baton init 都不会让它变新。
+// 不比对就会静默复用旧伴侣——症状是新页面调新接口却 404/405，得从版本号一路查到进程启动时间。
+if (p1.kind === 'companion') {
+  const want = repoVersion(serveRoot);
+  const got = p1.h.version || null;
+  if (want && got !== want) {
+    const who = p1.h.pid ? `kill ${p1.h.pid}` : `lsof -nP -iTCP:${port} -sTCP:LISTEN   # 找到 PID 后 kill 掉`;
+    console.error(
+      `端口 ${port} 上的伴侣是${got ? `旧版（${got}）` : '旧版（不报版本，说明早于 0.6.5）'}，仓库已是 ${want}。\n` +
+      `伴侣跑的是它启动那一刻的代码，更新仓库不会让它变新——先停掉再重来：\n` +
+      `  ${who}\n` +
+      `  ${openCmd(root, feature, flags.review ? '--review' : '')}`);
+    process.exit(1);
+  }
 }
 
 let h = p1.kind === 'companion' ? p1.h : null;

@@ -5,7 +5,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
-import { parseArgs, repoRoot, readTeam, readTask, whoami, warnIfUnmatched, git, appendJsonl, readJsonl, genId, nowIso, syncThenPush, listLocalDrafts } from './_lib.mjs';
+import { parseArgs, repoRoot, readTeam, readTask, whoami, warnIfUnmatched, git, appendJsonl, readJsonl, genId, nowIso, syncThenPush, listLocalDrafts, repoVersion } from './_lib.mjs';
 
 const MIME = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.mjs': 'text/javascript',
@@ -133,7 +133,9 @@ export function createHandler(ctx) {
     const urlPath = (req.url || '/').split('?')[0];
 
     if (urlPath === '/baton/health') {
-      return send(200, { ok: true, root: ctx.root, repo: path.basename(ctx.root), featuresDir: ctx.team.featuresDir, user: ctx.me ? ctx.me.name : ctx.user, github: ctx.me ? ctx.me.github : ctx.user });
+      // version/pid 是给 open 用的：进程跑的是启动那一刻的代码，光看仓库文件判断不出它新旧。
+      // 报了 pid，提示里就能直接给出 kill 命令，不必让人先去 lsof 找进程。
+      return send(200, { ok: true, version: repoVersion(ctx.root), pid: process.pid, root: ctx.root, repo: path.basename(ctx.root), featuresDir: ctx.team.featuresDir, user: ctx.me ? ctx.me.name : ctx.user, github: ctx.me ? ctx.me.github : ctx.user });
     }
     if (req.method === 'GET' && urlPath === '/baton/drafts') {
       const q = new URLSearchParams((req.url || '').split('?')[1] || '');
