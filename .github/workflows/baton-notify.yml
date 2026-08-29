@@ -1,0 +1,33 @@
+# Baton：push 后 ①原型 CI（check --all）②抽语义事件（交接/评论/入账）→ 按名册路由 → 飞书卡
+# webhook 存 repo secret BATON_FEISHU_WEBHOOK（baton init 已代设或按提示手动 gh secret set）
+name: baton
+on:
+  push:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: prototype ci
+        run: node .baton/scripts/check.mjs --all
+
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: extract & notify
+        env:
+          BATON_FEISHU_WEBHOOK: ${{ secrets.BATON_FEISHU_WEBHOOK }}
+        run: |
+          node .baton/scripts/extract-events.mjs --from "${{ github.event.before }}" --to "${{ github.sha }}" > /tmp/baton-events.json
+          cat /tmp/baton-events.json
+          node .baton/scripts/notify-feishu.mjs --file /tmp/baton-events.json

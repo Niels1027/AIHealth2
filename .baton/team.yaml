@@ -1,0 +1,19 @@
+# Baton 团队名册与配置（webhook 等 secret 绝不写在这里，只写去哪拿）
+# roster: github ↔ 称呼 ↔ 飞书名 的路由表；name/feishu 默认取 GitHub 登录名，想让通知卡显示中文称呼就直接改这里
+# 角色不在这里定——你用哪条命令，就是哪个角色
+version: 1
+featuresDir: features
+defaultBranch: main
+agents: [claude-code]
+companion:
+  port: 4173
+notify:
+  channel: feishu
+  secretName: BATON_FEISHU_WEBHOOK
+roster:
+  - github: SeanMa27
+    name: SeanMa27
+    feishu: SeanMa27
+  - github: Niels1027
+    name: Niels1027
+    feishu: Niels1027
