@@ -1,0 +1,10 @@
+# 一键启动验收环境的配方（baton up 在 v0.2 读它；现在先声明式写下来）
+# secret 只写「去哪拿」，绝不写值。
+# services:
+#   - name: fe
+#     cwd: ../your-frontend-repo
+#     run: pnpm dev
+#     port: 3000
+#     env:
+#       API_TOKEN: { from: 1password, item: dev-api-token }
+# ready: http://localhost:3000/healthz

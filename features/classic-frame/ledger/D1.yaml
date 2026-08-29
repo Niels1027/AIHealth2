@@ -1,0 +1,11 @@
+# Baton 决策台账条目（AI 从对话/评论提炼；纠错在对话里说，不手编此文件）
+id: D1
+feature: classic-frame
+title: 圆角方向 = 全直角 + 版框细线
+conclusion: 三个核心页的圆角一律归零，卡片改用古籍版框式细线。已排除的两条：2px 微圆角、如意切角（clip-path）。
+decidedBy: SeanMa27
+source:
+  kind: session
+  ref: /preview 会话中三选一，选定「全直角 + 版框细线（古籍味最重）」
+anchors: [b-overview, b-frame-token]
+ts: 2026-08-29T12:55:08.719Z

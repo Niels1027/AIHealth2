@@ -1,0 +1,12 @@
+# Baton 决策台账条目（AI 从对话/评论提炼；纠错在对话里说，不手编此文件）
+id: D2
+feature: classic-frame
+title: 双线版框只给章级容器，控件用单线直角
+conclusion: "双线版框（外 1px #cfd5d0 + 3px 留白 + 内 1px #e5e7e3）只用于章级容器：管理页三章、模型配置章、无权限卡。按钮、输入框、侧栏列表项、来源卡、聊天输入框容器一律单线直角——控件不套版框，否则满屏双线。"
+decidedBy: SeanMa27
+source:
+  kind: session
+  ref: AI 出稿时提出；/handoff 定稿 v0.2 前经 SeanMa27 逐条确认
+anchors: [b-frame-token, b-admin-status]
+ts: 2026-08-29T12:55:08.801Z
+amendedAt: 2026-08-29T13:45:18.365Z

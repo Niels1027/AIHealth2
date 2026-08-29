@@ -1,0 +1,12 @@
+# Baton 决策台账条目（AI 从对话/评论提炼；纠错在对话里说，不手编此文件）
+id: D3
+feature: classic-frame
+title: 圈点保留圆形，胶囊类跟着归零
+conclusion: 现网 7 处 rounded-full 分治：保留圆形的是状态圈点与回答者标记点（h-1.5 / h-2，共 4 处，属古籍圈点句读）；归零的是身份切换胶囊、引用号药丸、文档进度条（共 3 处）。引用号归零后补 1px 苔绿描边以免与正文数字混淆。
+decidedBy: SeanMa27
+source:
+  kind: session
+  ref: AI 出稿时提出；/handoff 定稿 v0.2 前经 SeanMa27 逐条确认
+anchors: [b-circle-keep, b-compensate]
+ts: 2026-08-29T12:55:08.882Z
+amendedAt: 2026-08-29T13:45:18.449Z

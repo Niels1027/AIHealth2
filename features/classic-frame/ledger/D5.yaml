@@ -1,0 +1,12 @@
+# Baton 决策台账条目（AI 从对话/评论提炼；纠错在对话里说，不手编此文件）
+id: D5
+feature: classic-frame
+title: 用户气泡去掉指向性圆角后补右侧竖线
+conclusion: 现网气泡用 rounded-br-md 指示「来自右边的人」，归零后该指向消失，改用右侧 2px 苔绿竖线承担，同时呼应古籍眉批边线。竖线随气泡高度通高。
+decidedBy: SeanMa27
+source:
+  kind: session
+  ref: AI 出稿时提出；/handoff 定稿 v0.2 前经 SeanMa27 逐条确认
+anchors: [b-chat-bubble, b-compensate]
+ts: 2026-08-29T12:55:09.045Z
+amendedAt: 2026-08-29T13:45:18.625Z
