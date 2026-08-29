@@ -14,7 +14,8 @@ description: Baton 研发查待办。当研发说「/review / 看看有什么交
    - 标题 + 版本 + 谁交接的
    - 交接单摘要（脚本已带 `handoffExcerpt`；用户想看全文就用 `git show origin/<branch>:<handoffDoc>` 读给他）
    - @他 的未结评论（原话引用）
-3. 用户想看页面 → 告诉他运行 `baton open <feature> --review`：伴侣会托管一个默认分支的独立 worktree（`.baton/review/`），页面永远是远端最新版，可直接点块评论——评论从那个 worktree 提交推送，照样不碰他的实现分支。
+3. 用户想看页面 → **命令直接用脚本给的那一条**：`review-queue.mjs` 的输出里已经带了「查看：…」，它会自动判断用户装没装全局 `baton` 命令，给出他真能执行的写法（没装就是 `node .baton/scripts/open.mjs <feature> --review`）。**不要凭记忆写 `baton open`**——clone 仓库的人默认没有那个命令。
+   作用：伴侣托管一个默认分支的独立 worktree（`.baton/review/`），页面永远是远端最新版，可直接点块评论——评论从那个 worktree 提交推送，照样不碰他的实现分支。
 4. 用户对某条评论/实现问题想在会话里深聊 → 正常聊；他要留正式意见时，评论应留在页面上（点块），不要替他代写进 threads.jsonl——**看在 HTML、办在 session、正式意见落在页面**。
 
 ## 边界

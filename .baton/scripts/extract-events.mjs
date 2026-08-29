@@ -65,6 +65,7 @@ for (const sha of commits) {
         for (let i = 0; i < 8 && cur && cur.parent; i++) cur = all.find((x) => x.id === cur.parent);
         return cur;
       };
+      const rounds = {};   // 同一批次（round）的评论合并成一个事件——一轮一张卡
       for (const line of diff.split('\n')) {
         if (!line.startsWith('+') || line.startsWith('+++')) continue;
         try {
@@ -83,8 +84,19 @@ for (const sha of commits) {
           if (!notify.length && t.summon !== 'ai') {
             try { notify = [readYamlFile(path.join(root, fdir, feature, 'task.yaml')).holder].filter(Boolean); } catch { /* */ }
           }
-          events.push({ type: 'comment', feature, thread: t, notify, sha });
+          if (t.round) {
+            (rounds[t.round] = rounds[t.round] || { threads: [], notify: new Set() }).threads.push(t);
+            for (const n of notify) rounds[t.round].notify.add(n);
+          } else {
+            events.push({ type: 'comment', feature, thread: t, notify, sha });
+          }
         } catch { /* 非 JSON 行忽略 */ }
+      }
+      for (const [round, g] of Object.entries(rounds)) {
+        events.push({ type: 'comments-round', feature, round, author: g.threads[0].author || '?',
+          count: g.threads.length,
+          items: g.threads.map((t) => ({ block: t.block, body: String(t.body || '').slice(0, 60), summon: t.summon })),
+          notify: [...g.notify], sha });
       }
     }
 

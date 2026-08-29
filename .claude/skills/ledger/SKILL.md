@@ -11,7 +11,7 @@ description: Baton 决策台账。当用户问「/ledger / 台账 / 之前怎么
 
 1. 读 `<featuresDir>/<feature>/ledger/D*.yaml`（按 id 排序）
 2. 回答时**必带条目号**：「D5 定的：TTL 下沉到投递行……（拍板人 Niels，出处见 handoffs/H1.md）」
-3. 用户要看全景 → 告诉他打开 `ledger/index.html`（可视化页，有原型锚点/讨论出处/被引用次数三处互链），或 `baton open <feature>` 后从原型页链过去
+3. 用户要看全景 → 告诉他打开 `ledger/index.html`（可视化页，有原型锚点/讨论出处/被引用次数三处互链），或 `node .baton/scripts/open.mjs <feature>` 起页面后从原型链过去（装过全局命令可简写 `baton open`）
 
 ## 入账（对话里出现拍板）
 

@@ -93,6 +93,38 @@ function checkFeature(name) {
     if (html.includes(marker)) warns.push(['C8', `页面含「${marker}」——正式帧不留开发者备注，确认是否该清理`]);
   }
 
+  // C9 演示替身：写死的凭证必须登记进 task.yaml 的 stubs
+  // （原型里写死口令是对的——单文件才能独立演示；危险在交接后被照抄进真实现。登记了就放行）
+  const stubs = (task && Array.isArray(task.stubs)) ? task.stubs : [];
+  const credPatterns = [
+    /\b[A-Za-z_]*(?:KEY|SECRET|TOKEN|PASSWORD|PASSCODE|PWD)[A-Za-z_]*\s*[=:]\s*["'][^"']{3,}["']/i,
+    /(?:口令|密码|密钥)\s*[=:：]\s*["'][^"']{3,}["']/,
+  ];
+  for (const re of credPatterns) {
+    const m = html.match(re);
+    if (m && !stubs.length) {
+      errors.push(['C9', `疑似写死的凭证「${m[0].slice(0, 48)}」未登记——记进 task.yaml 的 stubs（what/real/risk），/handoff 会把真实现要求带给研发`]);
+      break;
+    }
+  }
+
+  // C10 结构：多视图原型必须有导航，且导航与视图对齐（单视图不上导航，不查）
+  const views = [...html.matchAll(/data-baton-view\s*=\s*["']([^"']+)["']/g)].map((m) => m[1]);
+  const dupV = views.filter((v, i) => views.indexOf(v) !== i);
+  if (dupV.length) errors.push(['C10', `data-baton-view 重复：${[...new Set(dupV)].join(', ')}`]);
+  if (views.length >= 2) {
+    const navM = html.match(/<nav[^>]*data-baton-nav[\s\S]*?<\/nav>/i);
+    if (!navM) {
+      errors.push(['C10', `有 ${views.length} 个视图但没有 <nav data-baton-nav> 左侧导航——多视图必须有导航（见 .baton/PREVIEW_SPEC.md）`]);
+    } else {
+      const navIds = [...navM[0].matchAll(/data-view\s*=\s*["']([^"']+)["']/g)].map((m) => m[1]);
+      for (const v of views) if (!navIds.includes(v)) errors.push(['C10', `视图「${v}」不在导航里——读者到不了`]);
+      for (const n of navIds) if (!views.includes(n)) errors.push(['C10', `导航项「${n}」没有对应视图`]);
+      if (!views.includes('overview')) errors.push(['C10', '多视图原型必须有 overview（概要）视图且排第一——读者从这里进入']);
+      else if (views[0] !== 'overview') warns.push(['C10', 'overview 视图建议排在第一位（当前第一个是「' + views[0] + '」）']);
+    }
+  }
+
   return { name, errors, warns };
 }
 

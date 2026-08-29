@@ -359,3 +359,128 @@ export function warnIfUnmatched(who) {
     ② 把这条身份补进名册（可给该成员加 email: 字段做匹配）`);
   return true;
 }
+
+// ---------- 命令提示：只推荐用户真能执行的那种写法 ----------
+// 全局 baton 是本机安装的便利层，clone 仓库的人默认没有；仓库内脚本则一定存在。
+export function hasGlobalBaton() {
+  return sh('sh', ['-c', 'command -v baton >/dev/null 2>&1']).status === 0;
+}
+
+// 生成打开原型页的命令；在子目录里跑也给出正确的相对路径
+export function openCmd(root, feature, extra = '') {
+  const tail = `${feature}${extra ? ' ' + extra : ''}`;
+  if (hasGlobalBaton()) return `baton open ${tail}`;
+  let script = path.relative(process.cwd(), path.join(root, '.baton', 'scripts', 'open.mjs'));
+  if (!script.startsWith('.')) script = './' + script;
+  return `node ${script} ${tail}`;
+}
+
+// ---------- 同步纪律：读永不挡 · commit → merge → push · 失败必须说话 ----------
+// 全线用 merge：交接 tag 钉住了历史（定格不可改写），rebase 会重写它；stash 是共享活树的事故源，禁用。
+
+export function parseJsonlText(txt) {
+  const out = [];
+  for (const line of String(txt || '').split('\n')) {
+    const t = line.trim();
+    if (!t) continue;
+    try { out.push(JSON.parse(t)); } catch { /* 跳过坏行 */ }
+  }
+  return out;
+}
+
+// 合并本地与远端的 append-only 记录（按 id 去重）——读取一律「远端 + 本地未推送」并集
+export function mergeById(a, b) {
+  const seen = new Set(), out = [];
+  for (const rec of [...a, ...b]) {
+    const k = rec && rec.id ? rec.id : JSON.stringify(rec);
+    if (seen.has(k)) continue;
+    seen.add(k); out.push(rec);
+  }
+  return out.sort((x, y) => String(x.ts || '').localeCompare(String(y.ts || '')));
+}
+
+export function fetchRemote(root) {
+  return git(['fetch', 'origin', '--quiet'], { cwd: root }).status === 0;
+}
+
+// fetch 后的完整同步画像：落后/领先、远端将改哪些文件、与本地脏文件的交集
+export function syncStatus(root, team, { fetch = true } = {}) {
+  const fetched = fetch ? fetchRemote(root) : true;
+  const ref = `origin/${team.defaultBranch}`;
+  const n = (args) => parseInt(git(args, { cwd: root }).stdout, 10) || 0;
+  const behind = n(['rev-list', '--count', `HEAD..${ref}`]);
+  const ahead = n(['rev-list', '--count', `${ref}..HEAD`]);
+  // 注意：sh() 会 trim 整段 stdout，porcelain 第一行的前导状态位空格会被吃掉——
+  // 所以逐行 trim 后按「状态字母+空白」剥离，改名行取箭头右侧
+  const dirty = git(['status', '--porcelain'], { cwd: root }).stdout
+    .split('\n').filter(Boolean).map((l) => {
+      const p = l.trim().replace(/^[A-Z?!]{1,2}\s+/, '');
+      return p.includes(' -> ') ? p.split(' -> ').pop() : p;
+    }).filter(Boolean);
+  // 三个点 = 只算远端侧自分叉点以来的改动（这才是「将进来的」）
+  const incoming = behind > 0
+    ? git(['diff', '--name-only', `HEAD...${ref}`], { cwd: root }).stdout.split('\n').filter(Boolean)
+    : [];
+  const dirtySet = new Set(dirty);
+  const overlap = incoming.filter((f) => dirtySet.has(f));
+  return { fetched, behind, ahead, dirty, incoming, overlap, ref };
+}
+
+export function mergeRemote(root, team) {
+  const r = git(['merge', '--no-edit', `origin/${team.defaultBranch}`], { cwd: root });
+  if (r.status === 0) return { ok: true };
+  git(['merge', '--abort'], { cwd: root });
+  return { ok: false, reason: (r.stderr || r.stdout || '').split('\n')[0] || '合并失败' };
+}
+
+// 写路径的标准收尾（前提：调用方已把自己要发布的文件 commit 完——commit → merge → push）。
+// 返回 { pushed, merged, reason, hint }；reason: 'overlap' | 'conflict' | 'offline' | 'rejected'
+export function syncThenPush(root, team, { refspecs } = {}) {
+  const specs = refspecs || [`HEAD:${team.defaultBranch}`];
+  const push = () => git(['push', '--quiet', 'origin', ...specs], { cwd: root });
+  let st = syncStatus(root, team);
+  if (!st.fetched) {
+    if (push().status === 0) return { pushed: true, merged: false };
+    return { pushed: false, reason: 'offline', hint: '连不上远端（网络或代理）。改动已在本地定格，恢复后在会话里说一声即可补发。' };
+  }
+  let merged = false;
+  if (st.behind > 0) {
+    if (st.overlap.length) {
+      return { pushed: false, reason: 'overlap', overlap: st.overlap,
+        hint: `远端更新与你本地未保存的改动重叠（${st.overlap.join('、')}）——先把这些文件存档（commit），再重试。不用 rebase、不用 stash。` };
+    }
+    const m = mergeRemote(root, team);
+    if (!m.ok) return { pushed: false, reason: 'conflict', hint: `与远端有冲突（${m.reason}），需要在会话里处理。` };
+    merged = true;
+  }
+  let p = push();
+  if (p.status !== 0) {
+    // 推送窗口期远端又动了：再同步一次
+    st = syncStatus(root, team);
+    if (st.behind > 0 && !st.overlap.length && mergeRemote(root, team).ok) { merged = true; p = push(); }
+  }
+  if (p.status === 0) return { pushed: true, merged };
+  const msg = p.stderr || '';
+  const offline = /could not resolve host|unable to access|failed to connect|connection|timed out|not appear to be a git repo/i.test(msg);
+  return { pushed: false, reason: offline ? 'offline' : 'rejected',
+    hint: offline
+      ? '连不上远端（网络或代理）。改动已在本地定格，恢复后在会话里说一声即可补发。'
+      : `推送被拒（${msg.split('\n')[0] || '远端拒绝'}）。改动已在本地定格；在会话里说一声，我来处理同步。` };
+}
+
+// ---------- 评论草稿（攒批模式；本机文件不入库，防忘发要靠到处提醒） ----------
+export function listLocalDrafts(root, team) {
+  const out = [];
+  const dir = path.join(root, team.featuresDir);
+  if (!fs.existsSync(dir)) return out;
+  for (const name of fs.readdirSync(dir)) {
+    const cdir = path.join(dir, name, 'comments');
+    if (!fs.existsSync(cdir)) continue;
+    for (const f of fs.readdirSync(cdir)) {
+      if (!/^drafts-.+\.jsonl$/.test(f)) continue;
+      const count = readJsonl(path.join(cdir, f)).length;
+      if (count) out.push({ feature: name, file: path.join(cdir, f), count });
+    }
+  }
+  return out;
+}

@@ -2,7 +2,7 @@
 // 列出「交给我的活」：我在 to/defaultNotify 里的已交接功能 + @我 的未结评论
 // 用法：node .baton/scripts/review-queue.mjs [--as github登录名] [--json]
 import path from 'node:path';
-import { parseArgs, repoRoot, readTeam, git, parseYaml, whoami, warnIfUnmatched, effectiveStatuses } from './_lib.mjs';
+import { parseArgs, repoRoot, readTeam, git, parseYaml, whoami, warnIfUnmatched, effectiveStatuses, openCmd, listLocalDrafts } from './_lib.mjs';
 
 const { flags } = parseArgs(process.argv.slice(2));
 const root = repoRoot();
@@ -54,11 +54,15 @@ for (const name of features) {
   queue.push(item);
 }
 
+const localDrafts = listLocalDrafts(root, team);
+if (!flags.json && localDrafts.length) {
+  console.log(`⚠ 本机有未发送的评论草稿：${localDrafts.map((d) => `${d.feature} ×${d.count}`).join('、')} —— 打开页面在侧栏点「发送本轮」（或逐条撤回）\n`);
+}
 if (flags.json) { console.log(JSON.stringify(queue, null, 2)); process.exit(0); }
 if (!queue.length) { console.log(`没有交给 ${me} 的待办（远端 ${ref}）`); process.exit(0); }
 for (const q of queue) {
   console.log(`■ ${q.title}（${q.feature}）${q.version} · ${q.status} · 持棒 ${q.holder}`);
   if (q.handoff) console.log(`  交接 ${q.handoff.id} → ${(q.handoff.to || []).join(', ')} · 交接单 ${q.handoffDoc}`);
   for (const t of q.atMe) console.log(`  @你 [${t.block || t.parent}] ${t.author}: ${String(t.body).slice(0, 60)}`);
-  console.log(`  查看：baton open ${q.feature} --review   （读远端版本，不动你的工作区）`);
+  console.log(`  查看：${openCmd(root, q.feature, '--review')}   （读远端版本，不动你的工作区）`);
 }

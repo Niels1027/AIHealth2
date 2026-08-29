@@ -16,15 +16,29 @@
   launch.recipe.yaml               # 一键起验收环境的声明式配方（secret 只写去哪拿）
 ```
 
-## 原型五条硬规矩（check.mjs 机器把关）
+## 原型七条硬规矩（check.mjs 机器把关）
 
 1. **单文件自包含、零 CDN**——复制出去双击打开一模一样（C2）
 2. **版本号进页面不进文件名**——`<meta name="baton-version" content="vX.Y">`，且与 task.yaml 一致（C3）
 3. **每个可评区块标锚点**——`data-baton-block="<id>"`，id 全页唯一、语义稳定（改版尽量沿用旧 id，评论靠它挂靠；挂不上 = 「原区域已变更」）（C4/C5）
 4. **不能凭空设计**——原型里每个元素都有现网载体，记入 task.yaml 的 `carriers:`（path/repo/symbol），check 真的去扫（C6）
 5. **带评论加载器**——把 `.baton/scripts/loader.snippet.html` 整段内联到 `</body>` 前（C7）
+6. **演示替身要登记**——原型为独立可跑写的假实现（写死口令/假数据/模拟行为）逐条记入 task.yaml `stubs:`；未登记的写死凭证会被拦（C9）
+7. **结构成规**——概要先行；多视图必须左侧导航且与视图对齐（`data-baton-nav` ↔ `data-baton-view`，`overview` 排第一）（C10）；格式全文见 `.baton/PREVIEW_SPEC.md`（PRD+Figma 合一：正式帧零备注、状态穷举并排、改前改后对照、逻辑用表格、贴现网不另起炉灶）
 
 另：正式帧零开发者备注、内部代号换人话（C8 提示）。
+
+## 演示替身 stubs（task.yaml）
+
+```yaml
+stubs:
+  - what: 管理口令写死在页面 JS（moss-2026）
+    block: b-admin-key
+    real: 新增服务端校验接口；口令只存服务端 env、只在服务端比对，前端只递输入、收会话
+    risk: security   # security / data / behavior
+```
+
+原型里有替身天经地义——单文件才能独立演示；**危险在交接后被照抄进真实现**。所以：/preview 出稿时逐处登记，/handoff 把这节原样带进交接单（security 排最前），/verify 比对时逐条核销「替身是否已按 real 的要求替换」。
 
 ## 版本与发布
 
@@ -44,6 +58,7 @@
 - `summon`：`@AI` → `ai`（显式召唤才代答）；`@某人` → `user:<github>`；没 @ 任何人 → null，默认流转持棒产品
 - AI 代答铁律：**只转述台账已有记载 + 必带出处**（refs.ledger）；答不了 → 不答，流转产品
 - 长回答两段式：页面评论只放结论（两三行），完整推导落 `answers/<线程id>.md`，评论里给「查看推导 ↗」
+- **发送方式：默认攒一轮**——评论先落本机草稿（`comments/drafts-<github>.jsonl`，gitignore 不入库），侧栏可回看/撤回；「发送本轮」= 整批打同一 `round` 批次号 + **一个提交 + 一次推送 + 一张合并通知卡**。侧栏可切「逐条即发」。防忘发三道：页面草稿徽标、伴侣启动提醒、/review /reply 检测
 
 ## 台账 ledger/D*.yaml
 
@@ -69,6 +84,13 @@ ts: ISO8601
 - 实现侧命令（/review /verify）：正常使用工程语言
 
 `team.yaml` 的 roster 只是 github ↔ 称呼 ↔ 飞书名 的路由表；里面即使写了 role 字段，Baton 也不读它。
+
+## 同步纪律（历史分叉时怎么对齐）
+
+- **读永不挡**：/reply /review 的清单永远 fetch 后直接读远端引用——看东西不需要动工作区，任何状态都看得全
+- **写 = commit → merge → push**：先把自己的落袋（存档），再把远端的合进来，最后一起推出去。落后时 push 必被拒——那是 git 在保护别人的工作，绝不 --force
+- **全线 merge，禁 rebase 禁 stash**：交接 tag 钉住了历史（定格不可改写），rebase 会重写它；stash 是共享活树的事故源
+- **失败必须说话**：同步失败时脚本会说清原因（重叠文件点名／连不上远端／冲突），绝不静默继续读旧数据、绝不把「被拒」谎报成「离线」
 
 ## 验收 verify/
 

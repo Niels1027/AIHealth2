@@ -44,6 +44,7 @@ writeTask(root, team, name, {
   createdAt: nowIso(),
   defaultNotify: [],
   carriers: [],
+  stubs: [],   // 演示替身登记处：原型为独立可跑写的假实现（写死口令/假数据），交接单自动带上
   handoffs: [],
 });
 
@@ -51,11 +52,11 @@ fs.writeFileSync(path.join(dir, 'launch.recipe.yaml'), `# 一键启动验收环�
 # secret 只写「去哪拿」，绝不写值。
 # services:
 #   - name: fe
-#     cwd: ../n6-fe
+#     cwd: ../your-frontend-repo
 #     run: pnpm dev
 #     port: 3000
 #     env:
-#       API_TOKEN: { from: 1password, item: n6-dev-api }
+#       API_TOKEN: { from: 1password, item: dev-api-token }
 # ready: http://localhost:3000/healthz
 `);
 

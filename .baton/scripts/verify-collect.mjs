@@ -52,6 +52,7 @@ const dossier = {
   handoff: lastHandoff, handoffDoc: lastHandoff ? readFileSafe(path.join(dir, 'handoffs', `${lastHandoff.id}.md`)) : null,
   tag, tagTime,
   blocks, carriers, ledger,
+  stubs: (task && task.stubs) || [],
   openThreads: openThreads.map((t) => ({ id: t.id, block: t.block, author: t.author, body: t.body })),
   assertionsPresent: !!assertions,
   nextGapId: 'G' + ((gapIds.length ? Math.max(...gapIds) : 0) + 1),

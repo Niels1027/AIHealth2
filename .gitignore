@@ -21,3 +21,5 @@ screenshot-book.png
 screenshot-settings.png
 screenshot.png
 .baton/review/
+**/.cc-writes/
+**/comments/drafts-*.jsonl

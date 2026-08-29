@@ -1,10 +1,10 @@
-// /handoff 的确定性半程：校验 → 更新档案 → 一次提交 → 打版本标 → 推送
+// /handoff 的确定性半程：先与远端合流 → 校验 → 更新档案 → 一次提交 → 打版本标 → 推送
 // （交接单 handoffs/H<n>.md 由 AI 在调用前写好；本脚本不产生任何判断）
 // 用法：node .baton/scripts/handoff-commit.mjs <feature> --version v4.1 --to github1,github2 [--now]
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { parseArgs, repoRoot, readTeam, readTask, writeTask, featureDir, currentBranch, git, gitx, nowIso, rel } from './_lib.mjs';
+import { parseArgs, repoRoot, readTeam, readTask, writeTask, featureDir, currentBranch, git, gitx, nowIso, rel, syncStatus, mergeRemote, syncThenPush } from './_lib.mjs';
 
 const { flags, pos } = parseArgs(process.argv.slice(2));
 const feature = pos[0];
@@ -26,6 +26,21 @@ if (branch !== team.defaultBranch) {
   console.error(`当前在分支 ${branch}，交接必须在 ${team.defaultBranch} 上进行（Baton 不建分支）`);
   process.exit(1);
 }
+
+// 0.5) 先与远端合流——绝不在陈旧的基座上定格（否则 commit+tag 全部搁浅，推送必被拒）
+const st = syncStatus(root, team);
+if (st.fetched && st.behind > 0) {
+  if (st.overlap.length) {
+    console.error(`✗ 远端在你出稿期间更新了这些文件，与你本地未保存的改动重叠：
+    ${st.overlap.join('\n    ')}
+  先在会话里把它们存档（commit），再重新交接。不用 rebase、不用 stash。`);
+    process.exit(1);
+  }
+  const m = mergeRemote(root, team);
+  if (!m.ok) { console.error(`✗ 合并远端失败（${m.reason}），需要在会话里处理后再交接`); process.exit(1); }
+  console.log(`（已先合入远端 ${st.behind} 个新提交——出稿期间团队有新动静，交接建立在最新基座上）`);
+}
+if (!st.fetched) console.log('（连不上远端——将先在本地定格，恢复后补发）');
 
 // 1) 交接前 check 必须全绿（页面 meta 应已升到新版本号，用 --expect-version 对齐）
 const chk = spawnSync(process.execPath,
@@ -56,14 +71,15 @@ task.handoffs = task.handoffs || [];
 task.handoffs.push({ id: hid, version, ts: nowIso(), to });
 writeTask(root, team, feature, task);
 
-// 5) 一次提交 + 版本标
-gitx(['add', '--', path.relative(root, dir)], { cwd: root });
-gitx(['commit', '-m', `baton(handoff): ${feature} ${version} ${hid}`], { cwd: root });
+// 5) 一次提交（pathspec 限定功能目录，绝不卷走用户暂存区里的其他文件）+ 版本标
+const featRel = path.relative(root, dir);
+gitx(['add', '--', featRel], { cwd: root });
+gitx(['commit', '-m', `baton(handoff): ${feature} ${version} ${hid}`, '--', featRel], { cwd: root });
 gitx(['tag', tag], { cwd: root });
 
-// 6) 推送（离线时保留本地提交，不算失败）
-const push = git(['push', 'origin', `HEAD:${team.defaultBranch}`, tag], { cwd: root });
-const pushed = push.status === 0;
+// 6) 合流 + 推送（commit → merge → push；失败说清原因，绝不谎报「离线」）
+const res = syncThenPush(root, team, { refspecs: [`HEAD:${team.defaultBranch}`, tag] });
+const pushed = !!res.pushed;
 
 // 7) 本地即时通知（可选；正路是推送后 Actions 发卡）
 if (flags.now) {
@@ -78,4 +94,5 @@ if (flags.now) {
 
 console.log(`✓ 已交接：${feature} ${version}（${hid}）
   · 通知对象：${to.join(', ')}（已记为默认，下次不再问）
-  · ${pushed ? '已发布——推送后 Actions 会发飞书卡' : '已在本地定稿；当前离线，联网后自动补发（或手动 git push）'}`);
+  · ${pushed ? '已发布——推送后 Actions 会发飞书卡' : `已在本地定格，尚未发布：${res.hint}`}`);
+if (!pushed) process.exitCode = 0;   // 本地定格成功不算失败；同步问题已如实告知

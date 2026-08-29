@@ -5,7 +5,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { parseArgs, repoRoot, readTeam, listFeatures, currentBranch, git, sh } from './_lib.mjs';
+import { parseArgs, repoRoot, readTeam, listFeatures, currentBranch, git, sh, openCmd } from './_lib.mjs';
 
 const { flags, pos } = parseArgs(process.argv.slice(2));
 const root = repoRoot();
@@ -42,7 +42,7 @@ let feature = pos[0];
 if (!feature) {
   const all = listFeatures(serveRoot, team);
   if (all.length === 1) feature = all[0];
-  else { console.error('用法：baton open <feature>\n可选：' + (all.join(' / ') || '（还没有功能）')); process.exit(1); }
+  else { console.error('用法：open.mjs <feature>（或装了全局命令后 baton open <feature>）\n可选：' + (all.join(' / ') || '（还没有功能）')); process.exit(1); }
 }
 
 const base = `http://localhost:${port}`;
@@ -65,11 +65,11 @@ async function probe() {
 
 let p1 = await probe();
 if (p1.kind === 'companion' && p1.h.root !== serveRoot) {
-  console.error(`端口 ${port} 上的伴侣在托管另一个目录（${p1.h.root}）。换端口：baton open ${feature} --port ${port + 1}${flags.review ? ' --review' : ''}`);
+  console.error(`端口 ${port} 上的伴侣在托管另一个目录（${p1.h.root}）。换端口：${openCmd(root, feature, `--port ${port + 1}${flags.review ? ' --review' : ''}`)}`);
   process.exit(1);
 }
 if (p1.kind === 'other-http') {
-  console.error(`端口 ${port} 被别的服务占用（返回 HTTP ${p1.status}，不是 Baton 伴侣）。换端口：baton open ${feature} --port ${port + 1}${flags.review ? ' --review' : ''}`);
+  console.error(`端口 ${port} 被别的服务占用（返回 HTTP ${p1.status}，不是 Baton 伴侣）。换端口：${openCmd(root, feature, `--port ${port + 1}${flags.review ? ' --review' : ''}`)}`);
   process.exit(1);
 }
 

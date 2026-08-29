@@ -3,7 +3,7 @@
 // 用法：node .baton/scripts/reply-queue.mjs [feature] [--as github] [--json]
 import path from 'node:path';
 import fs from 'node:fs';
-import { parseArgs, repoRoot, readTeam, listFeatures, featureDir, readJsonl, whoami, warnIfUnmatched, effectiveStatuses, git } from './_lib.mjs';
+import { parseArgs, repoRoot, readTeam, listFeatures, featureDir, readJsonl, whoami, warnIfUnmatched, effectiveStatuses, git, syncStatus, parseJsonlText, mergeById, listLocalDrafts } from './_lib.mjs';
 
 const { flags, pos } = parseArgs(process.argv.slice(2));
 const root = repoRoot();
@@ -16,14 +16,21 @@ if (!me) {
   me = who.github;
 }
 
-// 先把别人推的评论拉回来（评论即文件；merge=union 免冲突）
-git(['pull', '--rebase', '--quiet'], { cwd: root });
+// 取远端最新。**不依赖 pull 成功**——工作树脏时 pull 会失败，若静默继续就会读到
+// 过期的本地文件、把「研发提了 4 条意见」显示成「没有评论」。
+// 所以：fetch 只更新远端引用（不碰工作区），评论从远端引用读，再并上本地未推送的。
+const st = syncStatus(root, team);
+const { fetched, behind, ref } = st;
+const remoteThreads = (name) => {
+  const r = git(['show', `${ref}:${team.featuresDir}/${name}/comments/threads.jsonl`], { cwd: root });
+  return r.status === 0 ? parseJsonlText(r.stdout) : [];
+};
 
 const targets = pos[0] ? [pos[0]] : listFeatures(root, team);
 const groups = { blocking: [], pendingAI: [], answered: [], forMe: [], other: [] };
 
 for (const name of targets) {
-  const threads = readJsonl(path.join(featureDir(root, team, name), 'comments', 'threads.jsonl'));
+  const threads = mergeById(remoteThreads(name), readJsonl(path.join(featureDir(root, team, name), 'comments', 'threads.jsonl')));
   const eff = effectiveStatuses(threads);
   const answersOf = (id) => threads.filter((t) => t.kind === 'answer' && t.parent === id);
   // AI 是否已经处理过这条：正式代答，或如实说"台账没记载、转产品"的回帖
@@ -42,9 +49,21 @@ for (const name of targets) {
   }
 }
 
-if (flags.json) { console.log(JSON.stringify({ me, groups }, null, 2)); process.exit(0); }
+const localDrafts = listLocalDrafts(root, team);
+if (!flags.json && localDrafts.length) {
+  console.log(`⚠ 本机有未发送的评论草稿：${localDrafts.map((d) => `${d.feature} ×${d.count}`).join('、')} —— 打开页面在侧栏点「发送本轮」（或逐条撤回）\n`);
+}
+if (flags.json) { console.log(JSON.stringify({ me, sync: { fetched, behind, ahead: st.ahead, dirty: st.dirty.length, overlap: st.overlap }, groups }, null, 2)); process.exit(0); }
+if (!fetched) console.log('⚠ 取不到远端（网络或代理）——下面只是本地已有的内容，可能不全\n');
+else if (behind > 0) console.log(`ℹ 远端有 ${behind} 个新提交，评论已直接从远端读出显示（读永不挡）。
+  处置（回帖/归档/改原型）前需要先对齐：${st.dirty.length ? `本地有 ${st.dirty.length} 个未保存文件 → 先存档（commit）→ ` : ''}合并远端（merge）→ 再处置。不用 rebase、不用 stash。\n`);
 const total = Object.values(groups).reduce((n, g) => n + g.length, 0);
-if (!total) { console.log('没有待处理的评论 · 干净'); process.exit(0); }
+if (!total) {
+  console.log(behind > 0 || !fetched
+    ? '没有待处理的评论（注意：上面的同步提示——若你预期有评论却没看到，先解决同步问题再确认）'
+    : '没有待处理的评论 · 干净');
+  process.exit(0);
+}
 const P = (label, list, tip) => {
   if (!list.length) return;
   console.log(`${label}（${list.length}）${tip ? ' · ' + tip : ''}`);

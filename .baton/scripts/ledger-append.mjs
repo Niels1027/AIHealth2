@@ -5,7 +5,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { parseArgs, repoRoot, readTeam, featureDir, readYamlFile, writeYamlFile, nowIso, gitUserName } from './_lib.mjs';
+import { parseArgs, repoRoot, readTeam, featureDir, readYamlFile, writeYamlFile, nowIso, whoami } from './_lib.mjs';
 
 const { flags, pos } = parseArgs(process.argv.slice(2));
 const feature = pos[0];
@@ -50,7 +50,7 @@ if (flags.amend) {
     feature,
     title: flags.title,
     conclusion,
-    decidedBy: flags['decided-by'] || gitUserName(root),
+    decidedBy: flags['decided-by'] || whoami(root, team).name,
     source: { kind: flags['source-kind'] || 'session', ref: flags['source-ref'] || '' },
     anchors: flags.anchors ? String(flags.anchors).split(',').map((s) => s.trim()).filter(Boolean) : [],
     ts: nowIso(),

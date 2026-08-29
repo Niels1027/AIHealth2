@@ -17,15 +17,18 @@ description: Baton 交接。当用户说「发给研发 / 交接 / handoff / 定
    - **这版是什么**：一段话 + 相对上一版改了什么（对着区块 id 说）
    - **要实现什么**：逐条可勾选的实现清单，每条尽量指向原型里的具体区块（`index.html` 的 `data-baton-block` id）
    - **载体清单**：从 task.yaml 的 carriers 摘录——研发从哪些现网文件入手
+   - **原型里哪些是假的（演示替身）**：从 task.yaml 的 `stubs:` 逐条摘录，每条写「原型做法 → 真实现要求」；`risk: security` 的排最前加粗。stubs 为空就写一行「无演示替身」——这一节是防止研发照抄原型里临时实现的唯一屏障
    - **已拍板的约束**：从台账摘 3–5 条最关键的（带 D 号），防止实现时把定过的又改回去
    - **开放问题**：还没拍板、允许研发自行判断的点（明说「可自行判断」）
-   - 结尾一行：`打开原型：baton open <feature>；评论直接点页面区块，@AI 可查台账`
+   - 结尾一行：``打开原型：`node .baton/scripts/open.mjs <feature>`（装过全局命令则 `baton open <feature>`）；评论直接点页面区块，@AI 可查台账``——**先给仓库内路径**，收件人 clone 下来就能跑，不必先装什么
 
 4. **选通知对象**：用 AskUserQuestion（多选），选项来自 `.baton/team.yaml` 的 roster（label 用称呼，value 用 github 登录名）。task.yaml 里已有 `defaultNotify` 时把这些人预选为推荐项，并注明「上次也是发给他们」。
 
 5. **一次定格发布**：
    `node .baton/scripts/handoff-commit.mjs <feature> --version vX.Y --to a,b`
-   脚本会自己完成：再跑一遍 check → 更新档案 → 一次提交 + 版本标 → 推送。推送后 GitHub Actions 会把飞书卡发给选中的人。本地想立即发通知可加 `--now`（需要本机配置过 webhook）。
+   脚本会自己完成：**先与远端合流**（落后时先 merge，绝不在陈旧基座上定格）→ 再跑一遍 check → 更新档案 → 一次提交 + 版本标 → 推送。推送后 GitHub Actions 会把飞书卡发给选中的人。本地想立即发通知可加 `--now`（需要本机配置过 webhook）。
+   - 脚本报「重叠」→ 远端更新撞上了用户本地未保存的文件：先在会话里把点名的文件存档（commit），再重跑本命令。禁 rebase、禁 stash
+   - 脚本报「已在本地定格，尚未发布」→ 照它给的原因办（连不上远端=恢复后说一声补发；被拒=让我处理同步），不要让用户手搓 git
 
 6. **汇报**（对产品角色的语言）：
    > 已发给 张工、小吴，定稿为 v4.1。交接单在 handoffs/H2.md；他们打开页面就能点块评论，@AI 的问题会按台账代答。有新评论时你会在飞书收到铃铛，回来 /reply 一次处理。

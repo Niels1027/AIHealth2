@@ -17,8 +17,8 @@ const feishuName = (github) => {
 const names = (list) => (list || []).map(feishuName).join('、') || '—';
 
 function cardFor(ev) {
-  const openLine = `打开：baton open ${ev.feature}`;
-  const C = { handoff: 'blue', comment: 'orange', reply: 'wathet', answer: 'turquoise', ledger: 'grey' };
+  const openLine = `打开：仓库里跑 node .baton/scripts/open.mjs ${ev.feature}（装过全局命令则 baton open ${ev.feature}）`;
+  const C = { handoff: 'blue', comment: 'orange', 'comments-round': 'orange', reply: 'wathet', answer: 'turquoise', ledger: 'grey' };
   let title, lines;
   if (ev.type === 'handoff') {
     title = `📦 ${ev.feature} ${ev.version} 已交接（${ev.handoff}）`;
@@ -30,12 +30,18 @@ function cardFor(ev) {
     lines = [`**${t.author || '?'}** 在区块 \`${t.block || t.parent || '?'}\`：`,
       `> ${String(t.body || '').slice(0, 120)}`,
       t.summon === 'ai' ? 'AI 只答台账有记载的；答不了会流转持棒产品' : `流转给：**${names(ev.notify)}** · 回来 /reply 一次处理`];
+  } else if (ev.type === 'comments-round') {
+    title = `💬 ${ev.feature} 新评论 ×${ev.count}（一轮）`;
+    const rows = ev.items.slice(0, 6).map((i) => `· \`${i.block || '?'}\` ${i.body}${i.summon === 'ai' ? '（@AI 待代答）' : ''}`);
+    if (ev.items.length > 6) rows.push(`…等 ${ev.items.length} 条`);
+    lines = [`**${ev.author}** 提了一轮意见：`, ...rows,
+      `流转给：**${names(ev.notify)}** · 回来 /reply 一次处理`, openLine];
   } else if (ev.type === 'reply') {
     const t = ev.thread || {};
     title = `↩️ ${ev.feature} 你的评论有回复`;
     lines = [ev.quoted ? `你说：> ${ev.quoted}` : '',
       `**${t.author || '?'}** 回复：`, `> ${String(t.body || '').slice(0, 120)}`,
-      `打开：baton open ${ev.feature}`];
+      openLine];
   } else if (ev.type === 'answer') {
     const t = ev.thread || {};
     title = `🤖 ${ev.feature} AI 已代答`;
