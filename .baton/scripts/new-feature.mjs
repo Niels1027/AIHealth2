@@ -2,6 +2,7 @@
 // 用法：node .baton/scripts/new-feature.mjs <name> [--title 标题] [--holder github登录名]
 import fs from 'node:fs';
 import path from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { parseArgs, repoRoot, readTeam, featureDir, writeTask, whoami, warnIfUnmatched, nowIso, rel } from './_lib.mjs';
 
 const { flags, pos } = parseArgs(process.argv.slice(2));
@@ -64,3 +65,6 @@ console.log(`✓ 功能档案已建：${rel(root, dir)}/
   task.yaml（状态 draft · 持棒 ${holder}）
   ledger/ comments/threads.jsonl decisions/ handoffs/ answers/ launch.recipe.yaml
 下一步：AI 读现网代码写 index.html（载体记入 task.yaml 的 carriers），完成后跑 check.mjs`);
+
+// 台账页从建档第一天就存在（空态「还没有拍板记录」）——原型左上角的「台账」tab 链接永不 404
+spawnSync(process.execPath, [path.join(root, '.baton', 'scripts', 'render-ledger.mjs'), name], { encoding: 'utf8' });

@@ -47,6 +47,11 @@ html.bt-shift .bt-panel{right:338px}
 .bt-compose button{border:0;background:#4f46e5;color:#fff;border-radius:8px;padding:7px 14px;font:500 12.5px/1 inherit;cursor:pointer}
 .bt-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:9999;background:#1e293b;color:#fff;font:12.5px/1 -apple-system,sans-serif;padding:10px 16px;border-radius:999px;opacity:0;transition:opacity .2s}
 .bt-toast.bt-show{opacity:1}
+.bt-tabs{position:fixed;top:14px;left:14px;z-index:9993;display:flex;gap:2px;background:#fff;border:1px solid #e2e8f0;border-radius:999px;padding:3px;font:12.5px/1 -apple-system,"PingFang SC",sans-serif;box-shadow:0 2px 10px rgba(15,23,42,.08)}
+.bt-tabs b,.bt-tabs a{padding:5px 14px;border-radius:999px;font-weight:400}
+.bt-tabs b{background:#1e293b;color:#fff}
+.bt-tabs a{color:#64748b;text-decoration:none}
+.bt-tabs a:hover{color:#1e293b;background:#f1f5f9}
 </style>
 <script data-baton-loader>
 (function(){
@@ -270,7 +275,15 @@ function blockClick(ev){
 }
 
 // ---------- 启动 ----------
+function renderTabs(){
+  // 原型↔台账互切（同步注入：file:// 双击打开、评论数据拉不到时也要在）
+  if($('.bt-tabs'))return;
+  var n=el('nav','bt-tabs','<b>原型</b><a href="ledger/index.html">台账</a>');
+  n.setAttribute('aria-label','页面切换');
+  document.body.appendChild(n);
+}
 function boot(){
+  renderTabs();
   reload().then(function(){
     return fetch('/baton/health',{cache:'no-store'}).then(function(r){return r.ok?r.json():null}).catch(function(){return null});
   }).then(function(h){

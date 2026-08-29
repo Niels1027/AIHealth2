@@ -8,6 +8,7 @@
 // 用法：node .baton/scripts/refresh-loader.mjs <feature> | --all [--check]
 import fs from 'node:fs';
 import path from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { parseArgs, repoRoot, readTeam, featureDir, listFeatures, rel, locateLoader, loaderIsCurrent } from './_lib.mjs';
 
 const { flags, pos } = parseArgs(process.argv.slice(2));
@@ -28,6 +29,12 @@ let changed = 0, stale = 0, missing = 0;
 for (const name of targets) {
   const file = path.join(featureDir(root, team, name), 'index.html');
   if (!fs.existsSync(file)) { console.log(`· ${name}：没有 index.html，跳过`); continue; }
+  // loader 注入的「台账」tab 链向 ledger/index.html——建档早于 0.6.2 的功能可能还没有这一页，就地补生成（空态也算一页）
+  const lpage = path.join(featureDir(root, team, name), 'ledger', 'index.html');
+  if (!fs.existsSync(lpage) && !flags.check) {
+    spawnSync(process.execPath, [path.join(root, '.baton', 'scripts', 'render-ledger.mjs'), name], { encoding: 'utf8' });
+    if (fs.existsSync(lpage)) console.log(`· ${name}：台账页缺失，已补生成（原型左上角 tab 链向它）`);
+  }
   const html = fs.readFileSync(file, 'utf8');
   const loc = locateLoader(html);
   if (!loc) { missing++; console.log(`⚠ ${name}：页面里没有评论层——把 .baton/scripts/loader.snippet.html 内联到 </body> 前`); continue; }
