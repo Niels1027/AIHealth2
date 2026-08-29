@@ -484,3 +484,24 @@ export function listLocalDrafts(root, team) {
   }
   return out;
 }
+
+// ---------- 评论层（loader）定位：check 与 refresh-loader 共用，杜绝两份实现漂移 ----------
+// loader 在原型里是一段连续区间：可选的 Baton 注释头 + <style data-baton-loader-css> + <script data-baton-loader>…</script>
+export function locateLoader(html) {
+  const scriptAt = html.indexOf('<script data-baton-loader>');
+  if (scriptAt < 0) return null;
+  const closeAt = html.indexOf('</script>', scriptAt);
+  if (closeAt < 0) return null;
+  const styleAt = html.indexOf('<style data-baton-loader-css>');
+  let start = styleAt >= 0 && styleAt < scriptAt ? styleAt : scriptAt;
+  const commentAt = html.lastIndexOf('<!-- Baton 评论层加载器', start);
+  if (commentAt >= 0) start = commentAt;   // 注释头属于 loader，一并纳入
+  return { start, end: closeAt + '</script>'.length };
+}
+
+// 内联的 loader 是否已是当前版本；返回 null 表示页面里根本没有 loader（由 C7 报缺失）
+export function loaderIsCurrent(html, snippet) {
+  const loc = locateLoader(html);
+  if (!loc) return null;
+  return html.slice(loc.start, loc.end).trim() === String(snippet).trim();
+}

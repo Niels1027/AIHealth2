@@ -13,6 +13,7 @@ description: Baton 原型模式。当用户说「出个原型 / 画个方案页 
   `node .baton/scripts/new-feature.mjs <name> --title <中文标题>`
   目录、task.yaml、台账骨架全部由脚本建，你不要手搓。
 - **继续已有原型**：用户 @ 了某个 `index.html`，直接在那份上改；不重建档案、不新开目录。
+  顺带查一下评论层是否过期：`node .baton/scripts/refresh-loader.mjs <feature> --check`——旧的就刷新一次（纯工具代码替换，不影响你正在改的内容）。
 
 ## 第二步：先读现网，再动手画（载体纪律）
 

@@ -3,7 +3,7 @@
 //       node .baton/scripts/check.mjs --all
 import fs from 'node:fs';
 import path from 'node:path';
-import { parseArgs, repoRoot, readTeam, readTask, featureDir, readJsonl, listFeatures, rel } from './_lib.mjs';
+import { parseArgs, repoRoot, readTeam, readTask, featureDir, readJsonl, listFeatures, rel, loaderIsCurrent } from './_lib.mjs';
 
 const { flags, pos } = parseArgs(process.argv.slice(2));
 const root = repoRoot();
@@ -83,9 +83,15 @@ function checkFeature(name) {
     }
   }
 
-  // C7 评论加载器：页面必须带 loader（点块评论的入口）
+  // C7 评论加载器：页面必须带 loader（点块评论的入口）；带了但过期则提醒刷新
+  // ——loader 出稿时内联进单文件，此后不随 kit 升级热更新；不提醒的话用户会一直用着旧评论 UI 而不自知
   if (!html.includes('data-baton-loader')) {
     errors.push(['C7', '缺少评论加载器——把 .baton/scripts/loader.snippet.html 内容放进 </body> 前']);
+  } else {
+    const snippetFile = path.join(root, '.baton', 'scripts', 'loader.snippet.html');
+    if (fs.existsSync(snippetFile) && loaderIsCurrent(html, fs.readFileSync(snippetFile, 'utf8')) === false) {
+      warns.push(['C7', `内联的评论层是旧版（kit 已更新）——跑 node .baton/scripts/refresh-loader.mjs ${name} 刷新；只换工具代码，页面内容不动`]);
+    }
   }
 
   // C8 正式帧不留开发者备注（弱信号，仅提示）
