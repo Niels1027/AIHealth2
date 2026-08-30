@@ -18,10 +18,11 @@ const names = (list) => (list || []).map(feishuName).join('、') || '—';
 
 // 配了 cloud.baseUrl（第二级上线）→ 卡片给可点链接：手机上点开就是页面，不必回终端。
 // 没配 → 原样给命令，Kit 用户一切照旧。两种形态由 team.yaml 一行决定，仓库数据不变。
+// 措辞保持短：交接卡会在它后面再接一句「页面上直接点块评论…」，写长了就重复了。
 function openLineFor(feature) {
   const url = cloudUrl(root, team, feature);
   return url
-    ? `[打开页面 ↗](${url}) · 手机也能开 · GitHub 登录后可直接点块评论`
+    ? `[打开页面 ↗](${url}) · 手机也能开`
     : `打开：仓库里跑 node .baton/scripts/open.mjs ${feature}（装过全局命令则 baton open ${feature}）`;
 }
 

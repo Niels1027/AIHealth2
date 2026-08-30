@@ -10,6 +10,8 @@ companion:
 notify:
   channel: feishu
   secretName: BATON_FEISHU_WEBHOOK
+cloud:
+  baseUrl: https://baton.buidlerdao.xyz
 roster:
   - github: SeanMa27
     name: SeanMa27
