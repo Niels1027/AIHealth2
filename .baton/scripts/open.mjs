@@ -5,7 +5,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { parseArgs, repoRoot, readTeam, listFeatures, currentBranch, git, sh, openCmd, repoVersion } from './_lib.mjs';
+import { parseArgs, repoRoot, readTeam, listFeatures, currentBranch, git, sh, openCmd, repoVersion, fetchRemote, mergeRemote } from './_lib.mjs';
 
 const { flags, pos } = parseArgs(process.argv.slice(2));
 const root = repoRoot();
@@ -16,8 +16,13 @@ const port = Number(flags.port) || team.companion.port || 4173;
 // 用专用分支 baton-review 而不是直接 checkout 默认分支——否则默认分支被 worktree 占用，
 // 研发在主工作区就切不回去了（git 不允许同一分支在两个 worktree 里检出）。
 function ensureReviewRoot() {
+  // 同步全线 merge（同步纪律，禁 rebase）：本地可能有一次没推出去的交接（commit + tag），
+  // rebase 会重写那次提交，tag 却还钉在旧历史上——版本标当场与主线分叉。
+  // 合不进去就照旧托管本地现状：读永不挡，同步问题另行在会话里解决。
   if (currentBranch(root) === team.defaultBranch) {
-    git(['pull', '--rebase', '--quiet'], { cwd: root });
+    fetchRemote(root);
+    const m = mergeRemote(root, team);
+    if (!m.ok) console.error(`（合入远端失败：${m.reason}——先托管本地现状，同步问题在会话里处理）`);
     return root;
   }
   const wt = path.join(root, '.baton', 'review');
@@ -30,10 +35,10 @@ function ensureReviewRoot() {
     const r = git(args, { cwd: root });
     if (r.status !== 0) { console.error(`建 review worktree 失败：${r.stderr}`); process.exit(1); }
   }
-  // 同步到远端最新（评论从这里提交，推送时显式映射回默认分支）
-  git(['fetch', 'origin', '--quiet'], { cwd: wt });
-  const rb = git(['rebase', `origin/${team.defaultBranch}`], { cwd: wt });
-  if (rb.status !== 0) { git(['rebase', '--abort'], { cwd: wt }); console.error('review worktree 同步失败，已回滚'); }
+  // 同步到远端最新（评论从这里提交，推送时显式映射回默认分支）。worktree 与主仓共享对象库，
+  // 上面已 fetch 过；用 merge 而不是 rebase——离线轮次里没推出去的评论提交不该被重写
+  const m = git(['merge', '--no-edit', '--quiet', `origin/${team.defaultBranch}`], { cwd: wt });
+  if (m.status !== 0) { git(['merge', '--abort'], { cwd: wt }); console.error('review worktree 同步失败，已回滚（先托管上次内容）'); }
   return wt;
 }
 const serveRoot = flags.review ? ensureReviewRoot() : root;

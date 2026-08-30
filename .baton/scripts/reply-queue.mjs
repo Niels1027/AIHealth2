@@ -53,8 +53,16 @@ const localDrafts = listLocalDrafts(root, team);
 if (!flags.json && localDrafts.length) {
   console.log(`⚠ 本机有未发送的评论草稿：${localDrafts.map((d) => `${d.feature} ×${d.count}`).join('、')} —— 打开页面在侧栏点「发送本轮」（或逐条撤回）\n`);
 }
-if (flags.json) { console.log(JSON.stringify({ me, sync: { fetched, behind, ahead: st.ahead, dirty: st.dirty.length, overlap: st.overlap }, groups }, null, 2)); process.exit(0); }
-if (!fetched) console.log('⚠ 取不到远端（网络或代理）——下面只是本地已有的内容，可能不全\n');
+if (flags.json) {
+  // warning 必须在 JSON 里显式出现：读不到远端时 groups 是基于过期本地内容算的，
+  // 消费方（AI）看到空分组会当成「没有评论」——本轮真发生过一次，4 条意见被显示成 0 条。
+  const warning = !fetched
+    ? `取不到远端（${st.fetchError || '未知原因'}）——下面只是本地已有的内容，可能不全，别当成「没有评论」`
+    : (behind > 0 ? `远端有 ${behind} 个新提交，已直接从远端读出；处置前需先对齐（存档 → merge）` : null);
+  console.log(JSON.stringify({ me, warning, sync: { fetched, fetchError: st.fetchError, behind, ahead: st.ahead, dirty: st.dirty.length, overlap: st.overlap }, groups }, null, 2));
+  process.exit(0);
+}
+if (!fetched) console.log(`⚠ 取不到远端（${st.fetchError || '网络或代理'}）——下面只是本地已有的内容，可能不全\n`);
 else if (behind > 0) console.log(`ℹ 远端有 ${behind} 个新提交，评论已直接从远端读出显示（读永不挡）。
   处置（回帖/归档/改原型）前需要先对齐：${st.dirty.length ? `本地有 ${st.dirty.length} 个未保存文件 → 先存档（commit）→ ` : ''}合并远端（merge）→ 再处置。不用 rebase、不用 stash。\n`);
 const total = Object.values(groups).reduce((n, g) => n + g.length, 0);

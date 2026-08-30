@@ -3,7 +3,7 @@
 // 用法：node .baton/scripts/verify-record.mjs <feature> --gap G1 --result pass|gaps [--status done|verifying]
 import fs from 'node:fs';
 import path from 'node:path';
-import { parseArgs, repoRoot, readTeam, readTask, writeTask, featureDir, git, gitx, rel, nowIso } from './_lib.mjs';
+import { parseArgs, repoRoot, readTeam, readTask, writeTask, featureDir, git, gitx, rel, nowIso, syncThenPush } from './_lib.mjs';
 
 const { flags, pos } = parseArgs(process.argv.slice(2));
 const feature = pos[0];
@@ -27,13 +27,14 @@ task.verify = task.verify || [];
 task.verify.push({ id: flags.gap, result: flags.result, ts: nowIso(), version: task.version });
 writeTask(root, team, feature, task);
 
-git(['pull', '--rebase', '--quiet'], { cwd: root });
-gitx(['add', '--', rel(root, dir)], { cwd: root });
-const c = git(['commit', '-q', '-m', `baton(verify): ${feature} ${task.version} ${flags.gap} ${flags.result}`], { cwd: root });
-let pushed = false;
-if (c.status === 0) {
-  let p = git(['push', '--quiet'], { cwd: root });
-  if (p.status !== 0) { git(['pull', '--rebase', '--quiet'], { cwd: root }); p = git(['push', '--quiet'], { cwd: root }); }
-  pushed = p.status === 0;
-}
-console.log(`✓ 验收已落档：${flags.gap}（${flags.result}）· 状态 → ${task.status}${pushed ? '' : '（离线，待推送）'}`);
+// commit → merge → push（与 thread-update / handoff-commit 同一套同步纪律）：
+// pathspec 提交只定格功能目录，绝不卷走用户暂存区里的其他文件；
+// 推送交给 syncThenPush 合流，失败说清原因（认证 / 离线 / 被拒分开），不再笼统「离线，待推送」。
+const featRel = rel(root, dir);
+gitx(['add', '--', featRel], { cwd: root });
+const c = git(['commit', '-q', '-m', `baton(verify): ${feature} ${task.version} ${flags.gap} ${flags.result}`, '--', featRel], { cwd: root });
+if (c.status !== 0) { console.error(`✗ 提交失败：${c.stderr || c.stdout}`); process.exit(1); }
+const res = syncThenPush(root, team);
+console.log(`✓ 验收已落档：${flags.gap}（${flags.result}）· 状态 → ${task.status}${res.pushed
+  ? (res.merged ? '（已顺带合入远端新提交）' : '')
+  : `\n  ⚠ 已入库本地，尚未同步给团队：${res.hint}`}`);

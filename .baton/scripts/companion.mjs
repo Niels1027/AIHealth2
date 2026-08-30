@@ -20,7 +20,39 @@ export function makeCtx(root) {
   const who = whoami(root, team);
   // 伴侣会替你署名每一条评论——身份对不上必须当场喊，不能等评论发出去才发现
   warnIfUnmatched(who);
-  return { root, team, user: who.gitName, me: who.matched ? who : null, who };
+  // 版本在启动那一刻定格：进程跑的是启动时加载的代码，现读磁盘只会报出「仓库已升级」
+  // 的新版本号，让 open 的版本闸永远比对通过——闸就白设了。
+  return { root, team, user: who.gitName, me: who.matched ? who : null, who, version: repoVersion(root) };
+}
+
+// ---------- 本机信任边界 ----------
+// 伴侣是无鉴权的本机服务，而写路由的副作用是「以你的 git 身份提交并推送到团队仓库」。
+// 你开着它时访问任意网页，那个页面就能对 127.0.0.1 发跨站请求（text/plain 的 POST
+// 不触发预检，直达服务器）。三道一起上，成本几乎为零：
+//   ① Host 必须是本机 —— 挡 DNS rebinding（否则外部页面能变成「同源」读走整仓源码）
+//   ② Origin 若存在必须是本机 —— 挡普通跨站请求
+//   ③ 写请求必须 application/json —— 这一条就让「无预检」的攻击路径不成立
+const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '::1', '[::1]']);
+function hostOf(v) {
+  if (!v) return null;
+  const m = String(v).trim().replace(/^https?:\/\//, '').match(/^(\[[^\]]+\]|[^:/]+)/);
+  return m ? m[1].toLowerCase() : null;
+}
+function isLocal(v) { const h = hostOf(v); return !!h && LOCAL_HOSTS.has(h); }
+
+const DENY = {
+  host: '请求的 Host 不是本机——伴侣只服务 localhost',
+  origin: '跨站请求被拒——评论会以你的 git 身份提交并推送，只接受本机页面发起',
+  ct: '写请求必须是 application/json',
+};
+// 返回拒绝原因键；null = 放行
+export function denyReason(req, { write = false } = {}) {
+  if (!isLocal(req.headers && req.headers.host)) return 'host';
+  if (!write) return null;
+  const o = req.headers.origin;
+  if (o && o !== 'null' && !isLocal(o)) return 'origin';
+  if (!String((req.headers['content-type'] || '')).includes('application/json')) return 'ct';
+  return null;
 }
 
 // 从 URL path 推导功能名：/<featuresDir>/<name>/...
@@ -130,12 +162,25 @@ export function createHandler(ctx) {
       res.writeHead(code, { 'Content-Type': type || 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
       res.end(typeof obj === 'string' || Buffer.isBuffer(obj) ? obj : JSON.stringify(obj));
     };
+    // 同步异常只该坏一次请求，绝不能杀常驻进程：坏 URL（decodeURIComponent 抛 URIError）、
+    // merge 窗口期读文件的竞态都会走到这里。不兜住 = uncaughtException 带走伴侣，
+    // 此后页面只剩「暂存失败：…」的谜之症状，还得有人想起来重启。
+    try { return route(req, send); }
+    catch (e) { try { send(e instanceof URIError ? 400 : 500, { ok: false, error: e.message }); } catch { /* 响应已发出 */ } }
+  };
+
+  function route(req, send) {
     const urlPath = (req.url || '/').split('?')[0];
+
+    // 信任边界：Host 全路由都查（含静态托管——rebinding 的目标就是读走整仓源码）；
+    // 写路由再加 Origin 与 Content-Type。
+    const deny = denyReason(req, { write: req.method === 'POST' });
+    if (deny) return send(403, { ok: false, error: 'forbidden', detail: DENY[deny] });
 
     if (urlPath === '/baton/health') {
       // version/pid 是给 open 用的：进程跑的是启动那一刻的代码，光看仓库文件判断不出它新旧。
       // 报了 pid，提示里就能直接给出 kill 命令，不必让人先去 lsof 找进程。
-      return send(200, { ok: true, version: repoVersion(ctx.root), pid: process.pid, root: ctx.root, repo: path.basename(ctx.root), featuresDir: ctx.team.featuresDir, user: ctx.me ? ctx.me.name : ctx.user, github: ctx.me ? ctx.me.github : ctx.user });
+      return send(200, { ok: true, version: ctx.version, pid: process.pid, root: ctx.root, repo: path.basename(ctx.root), featuresDir: ctx.team.featuresDir, user: ctx.me ? ctx.me.name : ctx.user, github: ctx.me ? ctx.me.github : ctx.user });
     }
     if (req.method === 'GET' && urlPath === '/baton/drafts') {
       const q = new URLSearchParams((req.url || '').split('?')[1] || '');
@@ -199,7 +244,7 @@ export function createHandler(ctx) {
       return send(404, { ok: false, error: 'not found' });
     }
     send(200, fs.readFileSync(abs), MIME[path.extname(abs).toLowerCase()] || 'application/octet-stream');
-  };
+  }
 }
 
 // 首页：列出所有功能（无 index.html 的仓库根访问时）

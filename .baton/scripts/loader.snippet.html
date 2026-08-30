@@ -3,6 +3,8 @@
 <style data-baton-loader-css>
 .bt-pin{position:absolute;z-index:9990;width:22px;height:22px;border-radius:11px 11px 11px 3px;background:#4f46e5;color:#fff;font:600 11px/22px -apple-system,sans-serif;text-align:center;cursor:pointer;box-shadow:0 2px 8px rgba(79,70,229,.35);border:0}
 .bt-pin.bt-done{background:#94a3b8}
+.bt-navc{display:inline-block;min-width:16px;padding:0 5px;margin-left:6px;border-radius:9px;background:#4f46e5;color:#fff;font:600 10px/16px -apple-system,sans-serif;text-align:center;vertical-align:1px}
+.bt-navc.bt-done{background:#cbd5e1;color:#475569}
 .bt-hl{outline:2px solid #4f46e5;outline-offset:3px;border-radius:6px}
 .bt-fabs{position:fixed;right:18px;bottom:18px;z-index:9995;display:flex;flex-direction:column;gap:8px;align-items:flex-end;transition:right .2s}
 html.bt-shift .bt-fabs{right:338px}
@@ -28,6 +30,7 @@ html.bt-shift body{margin-right:320px}
 .bt-sendbar button{width:100%;border:0;background:#4f46e5;color:#fff;border-radius:8px;padding:9px;font:600 13px/1 -apple-system,sans-serif;cursor:pointer}
 .bt-sendbar small{display:block;text-align:center;color:#94a3b8;margin-top:6px;font-size:11.5px}
 .bt-empty{padding:28px 14px;color:#94a3b8;text-align:center}
+.bt-else{padding:10px 14px;color:#94a3b8;font-size:12px;border-top:1px solid #f1f5f9}
 .bt-panel{position:fixed;right:18px;bottom:64px;z-index:9996;width:340px;max-height:70vh;overflow:auto;background:#fff;border:1px solid #e2e8f0;border-radius:14px;box-shadow:0 12px 40px rgba(15,23,42,.18);font:13px/1.65 -apple-system,"PingFang SC",sans-serif;color:#1e293b;display:none}
 html.bt-shift .bt-panel{right:338px}
 .bt-panel.bt-open{display:block}
@@ -51,17 +54,52 @@ html.bt-shift .bt-panel{right:338px}
 .bt-tabs b{background:#1e293b;color:#fff}
 .bt-tabs a{color:#64748b;text-decoration:none}
 .bt-tabs a:hover{color:#1e293b;background:#f1f5f9}
+.bt-ledg{margin:10px 14px 0;padding:9px 11px;background:#eef2ff;border:1px solid #c7d2fe;border-radius:10px}
+.bt-ai{margin:10px 0 0;padding:9px 11px;background:#eef2ff;border:1px solid #c7d2fe;border-radius:10px}
+.bt-lhd{font:600 12px/1.5 -apple-system,"PingFang SC",sans-serif;color:#3730a3}
+.bt-lrow{display:flex;gap:7px;margin-top:6px;align-items:baseline;font-size:12.5px;line-height:1.55}
+.bt-lrow b{font-weight:600}
+.bt-dchip{flex:none;font:600 11px/1.7 ui-monospace,Menlo,monospace;color:#3730a3;background:#fff;border:1px solid #c7d2fe;border-radius:6px;padding:0 6px;text-decoration:none}
+.bt-lcon{color:#64748b;font-size:12px;margin-top:1px}
+.bt-lmore{display:inline-block;margin-top:7px;font-size:12px;color:#4f46e5;text-decoration:none}
+.bt-lbtns{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap}
+.bt-lbtns button{border:1px solid #e2e8f0;background:#fff;color:#1e293b;border-radius:8px;padding:6px 11px;font:500 12px/1 -apple-system,"PingFang SC",sans-serif;cursor:pointer}
+.bt-lbtns .bt-lpri{background:#4f46e5;border-color:#4f46e5;color:#fff}
 </style>
 <script data-baton-loader>
 (function(){
 "use strict";
-var THREADS=[],DRAFTS=[],HEALTH=null,MODE=false,PANEL=null,SIDE=null,FABS=null;
+var THREADS=[],DRAFTS=[],LEDGER=[],HEALTH=null,MODE=false,PANEL=null,SIDE=null,FABS=null;
 function $(s,r){return (r||document).querySelector(s)}
 function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
-function escap(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+// 转义要含引号：escap 的输出会进属性位（data-b="…"、href="…"），而 block/refs 来自评论数据。
+// 不转 " 与 ' 的话，一条 block 为 x" onclick="… 的评论就能让每个打开原型的人执行脚本。
+function escap(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
 function toast(msg){var t=$('.bt-toast')||document.body.appendChild(el('div','bt-toast'));t.textContent=msg;t.classList.add('bt-show');clearTimeout(t._h);t._h=setTimeout(function(){t.classList.remove('bt-show')},2800)}
 function store(k,v){try{localStorage.setItem('baton-'+k,v)}catch(e){}}
 function stored(k){try{return localStorage.getItem('baton-'+k)}catch(e){return null}}
+// 按属性值精确找元素。绝不用 '[attr="'+v+'"]' 拼选择器——v 来自评论数据，
+// 含一个引号就是非法选择器，querySelector 抛异常、被 boot 的 catch 吞掉，
+// 整个评论层静默死亡（一条脏数据瘫痪所有人）。这里逐个比对，任何值都安全。
+function byAttr(attr,val,scope){
+  var list=(scope||document).querySelectorAll('['+attr+']');
+  for(var i=0;i<list.length;i++)if(list[i].getAttribute(attr)===val)return list[i];
+  return null;
+}
+function blockEl(b){return byAttr('data-baton-block',b)}
+
+// ---------- 台账反转索引（区块级拍板提示 + @AI 前置本地查的数据源） ----------
+// render-ledger 入账即重产 ledger/anchors.json；拉不到（file:// / 还没拍板）就静默为空，
+// 提示条不出现、@AI 走「本地没查到 → 保留召唤兜底」分支，评论层其余功能不受影响。
+function reloadLedger(){
+  return fetch('ledger/anchors.json',{cache:'no-store'}).then(function(r){return r.ok?r.json():null})
+    .then(function(j){LEDGER=(j&&j.entries)||[]}).catch(function(){LEDGER=[]});
+}
+function ledgerFor(b){return LEDGER.filter(function(e){return (e.anchors||[]).indexOf(b)>=0})}
+function ledgerRow(e,withCon){
+  return '<div class="bt-lrow"><a class="bt-dchip" href="ledger/index.html#'+encodeURIComponent(e.id)+'">'+escap(e.id)+'</a>'
+    +'<div><b>'+escap(e.title||'')+'</b>'+(withCon&&e.conclusion?'<div class="bt-lcon">'+escap(String(e.conclusion).slice(0,140))+'</div>':'')+'</div></div>';
+}
 
 function roots(){return THREADS.filter(function(t){return t.kind==='comment'})}
 function children(id){return THREADS.filter(function(t){return t.parent===id&&t.kind!=='status'})}
@@ -74,7 +112,7 @@ function renderPins(){
   var byBlock={};
   roots().forEach(function(t){(byBlock[t.block]=byBlock[t.block]||[]).push(t)});
   Object.keys(byBlock).forEach(function(b){
-    var host=document.querySelector('[data-baton-block="'+b+'"]');
+    var host=blockEl(b);
     if(!host)return;
     if(getComputedStyle(host).position==='static')host.style.position='relative';
     var list=byBlock[b];
@@ -88,13 +126,47 @@ function renderPins(){
 }
 
 function hlBlock(b){
-  var host=document.querySelector('[data-baton-block="'+b+'"]');
+  var host=blockEl(b);
   if(!host)return;
+  // 区块可能在未激活的视图里；display:none 的元素 scrollIntoView 是空操作，
+  // 所以先切到它所属的视图，切换动作交还给原型自己的导航（点它的 nav 链接）。
+  if(gotoViewOf(b)){setTimeout(function(){hlNow(host)},0);return}
+  hlNow(host);
+}
+function hlNow(host){
   host.scrollIntoView({block:'center'});host.classList.add('bt-hl');
   var evs=['scroll','pointerdown','keydown'];
   var clear=function(){host.classList.remove('bt-hl');evs.forEach(function(ev){window.removeEventListener(ev,clear,true)})};
   setTimeout(function(){evs.forEach(function(ev){window.addEventListener(ev,clear,{capture:true,passive:true})})},700);
   setTimeout(clear,20000);
+}
+
+// ---------- 视图感知（多视图原型：nav[data-baton-nav] + section[data-baton-view]） ----------
+function navEl(){return document.querySelector('nav[data-baton-nav]')}
+function viewSecs(){return document.querySelectorAll('[data-baton-view]')}
+function multiView(){return !!navEl()&&viewSecs().length>1}
+// 区块属于哪个视图（单视图原型返回 null）
+function viewOf(b){
+  var host=blockEl(b);
+  if(!host||!host.closest)return null;
+  var sec=host.closest('[data-baton-view]');
+  return sec?sec.getAttribute('data-baton-view'):null;
+}
+// 当前显示的视图：以「有没有被渲染出来」判断，不猜原型用 class 还是 hash 切换
+function activeView(){
+  var secs=viewSecs();
+  for(var i=0;i<secs.length;i++)if(secs[i].getClientRects().length)return secs[i].getAttribute('data-baton-view');
+  return null;
+}
+// 切到某区块所属视图；已经在该视图或非多视图返回 false（无需等待）
+function gotoViewOf(b){
+  if(!multiView())return false;
+  var v=viewOf(b);
+  if(!v||v===activeView())return false;
+  var link=byAttr('data-view',v,navEl());
+  if(!link)return false;
+  link.click();          // 复用原型自己的切换逻辑
+  return true;
 }
 
 // ---------- 侧边栏：全部评论 + 本轮草稿（常驻列表，与页面双向联动） ----------
@@ -104,6 +176,13 @@ function renderSide(){
   var rs=roots(),order=blockOrder(),known={};order.forEach(function(b,i){known[b]=i});
   var live=rs.filter(function(t){return known[t.block]!=null}).sort(function(a,b){return known[a.block]-known[b.block]});
   var drift=rs.filter(function(t){return known[t.block]==null});
+  // 多视图：侧栏只列当前视图的评论，别的视图靠左侧导航上的计数去找
+  var mv=multiView(),cur=mv?activeView():null,elsewhere=0;
+  if(mv&&cur!=null){
+    var mine=[],other=[];
+    live.forEach(function(t){(viewOf(t.block)===cur?mine:other).push(t)});
+    live=mine;elsewhere=other.length;
+  }
   var h='<div class="bt-shd"><b>评论</b><small>'+rs.length+' 线程 · threads.jsonl</small><button class="bt-x" title="收起">✕</button></div>';
   h+='<div class="bt-scroll">';
   if(HEALTH&&DRAFTS.length){
@@ -113,7 +192,7 @@ function renderSide(){
     });
   }
   if(live.length){
-    h+='<div class="bt-sec">已发布</div>';
+    h+='<div class="bt-sec">已发布'+(mv&&cur!=null?' · 本视图':'')+'</div>';
     live.forEach(function(t){
       h+='<div class="bt-item" data-b="'+escap(t.block)+'" data-t="'+escap(t.id)+'"><div class="bt-meta">'+escap(t.author||'?')+' · '+escap(t.block||'')+(EFF[t.id]?' · '+escap(EFF[t.id]):'')+(children(t.id).length?' · ↳'+children(t.id).length:'')+'</div><div>'+escap(String(t.body||'').slice(0,90))+'</div></div>';
     });
@@ -125,10 +204,37 @@ function renderSide(){
     });
   }
   if(!rs.length&&!DRAFTS.length)h+='<div class="bt-empty">还没有评论'+(HEALTH?'——点右下角「✎ 点块评论」，再点任意区块开始':'')+'</div>';
+  else if(!live.length&&!drift.length&&!DRAFTS.length)h+='<div class="bt-empty">这个视图没有评论——左侧导航上带数字的那几项有</div>';
+  if(elsewhere)h+='<div class="bt-else">其他视图还有 '+elsewhere+' 条 · 点左侧导航切过去看</div>';
   h+='</div>';
   if(HEALTH&&DRAFTS.length)h+='<div class="bt-sendbar"><button data-act="send">发出本轮（'+DRAFTS.length+' 条）</button><small>一次同步给团队 · 一张合并通知卡</small></div>';
   s.innerHTML=h;
-  renderFabs();
+  renderFabs();renderNavCounts();
+}
+// 左侧导航每一项挂一个计数（多视图才有）：告诉你评论散在哪几个视图里。
+// 全部已处置的显示灰色——和区块图钉的 bt-done 同一套语义。
+function renderNavCounts(){
+  var nav=navEl();if(!nav)return;
+  nav.querySelectorAll('.bt-navc').forEach(function(n){n.remove()});
+  if(!multiView())return;
+  var tally={};
+  roots().forEach(function(t){
+    var v=viewOf(t.block);if(v==null)return;
+    var e=tally[v]=tally[v]||{n:0,open:0};
+    e.n++;var s=EFF[t.id];if(s!=='resolved'&&s!=='archived')e.open++;
+  });
+  nav.querySelectorAll('[data-view]').forEach(function(a){
+    var e=tally[a.getAttribute('data-view')];if(!e)return;
+    var b=el('span','bt-navc'+(e.open?'':' bt-done'),String(e.n));
+    b.title=e.n+' 条评论'+(e.open?'（'+e.open+' 条待处置）':'（都已处置）');
+    a.appendChild(b);
+  });
+}
+// 切视图后重算：侧栏按当前视图过滤，计数也要跟着刷新
+function watchViews(){
+  var nav=navEl();
+  if(nav)nav.addEventListener('click',function(){setTimeout(function(){renderSide()},0)});
+  window.addEventListener('hashchange',function(){setTimeout(function(){renderSide()},0)});
 }
 function ensureSide(){
   if(SIDE)return SIDE;
@@ -171,7 +277,7 @@ function renderFabs(){
 // ---------- 区块面板（写评论的地方） ----------
 function threadHtml(t){
   var kids=children(t.id);
-  var drift=!document.querySelector('[data-baton-block="'+t.block+'"]');
+  var drift=!blockEl(t.block);
   var h='<div class="bt-meta">'+escap(t.author||'?')+' · '+escap((t.ts||'').slice(0,10))+' · '+escap(t.block||'')+(EFF[t.id]?' · '+escap(EFF[t.id]):'')+'</div>'
     +(drift?'<div class="bt-drift">⚠ 原区域已变更（评论仍保留）</div>':'')
     +'<div>'+escap(t.body||'')+'</div>';
@@ -194,20 +300,57 @@ function openPanel(block,focusThread){
   var list=block?roots().filter(function(t){return t.block===block}):roots();
   var body=list.map(function(t){return '<div class="bt-th" data-t="'+escap(t.id)+'">'+threadHtml(t)+'</div>'}).join('')||'<div class="bt-th" style="color:#94a3b8">这个区块还没有评论</div>';
   var canWrite=!!HEALTH;
+  // 区块级拍板提示：最常见的提问（「这当时怎么定的」）在评论框打开那一刻被答案拦截
+  var lg=block?ledgerFor(block):[];
+  var hint=lg.length
+    ?'<div class="bt-ledg"><div class="bt-lhd">📌 这块有 '+lg.length+' 条拍板管着</div>'
+      +lg.slice(0,3).map(function(e){return ledgerRow(e,false)}).join('')
+      +'<a class="bt-lmore" href="ledger/index.html">'+(lg.length>3?'还有 '+(lg.length-3)+' 条 · ':'')+'台账详情 ↗</a></div>'
+    :'';
   var compose=block&&canWrite
-    ?'<div class="bt-compose"><textarea placeholder="就这个区块说点什么… @AI 可召唤代答（只答台账有记载的）"></textarea><div class="bt-row"><small>'+escap(HEALTH.user||'')+' · 不会立刻发出 · 右侧可回看/撤回</small><button>暂存到本轮</button></div></div>'
+    ?'<div class="bt-compose"><textarea placeholder="就这个区块说点什么… @AI 先查台账（只有你看得见）"></textarea><div class="bt-row"><small>'+escap(HEALTH.user||'')+' · 不会立刻发出 · 右侧可回看/撤回</small><button>暂存到本轮</button></div></div>'
     :(block?'<div class="bt-compose"><small>只读模式 · 在仓库里跑 node .baton/scripts/open.mjs &lt;功能名&gt; 打开即可评论</small></div>':'');
-  p.innerHTML='<div class="bt-hd"><span>'+(block?'评论 · '+escap(block):'全部评论')+'</span><small>'+list.length+' 线程</small></div>'+body+compose;
+  p.innerHTML='<div class="bt-hd"><span>'+(block?'评论 · '+escap(block):'全部评论')+'</span><small>'+list.length+' 线程</small></div>'+body+hint+compose;
   p.classList.add('bt-open');
-  if(focusThread){var n=p.querySelector('[data-t="'+focusThread+'"]');if(n){n.scrollIntoView();n.style.background='#f5f5ff'}}
+  if(focusThread){var n=byAttr('data-t',focusThread,p);if(n){n.scrollIntoView();n.style.background='#f5f5ff'}}
   var btn=p.querySelector('.bt-compose button');
   if(btn)btn.addEventListener('click',function(){
     var ta=p.querySelector('textarea');var v=(ta.value||'').trim();if(!v)return;
-    post('/baton/draft',{path:location.pathname,block:block,body:v}).then(function(r){
-      ta.value='';toast(/@AI/i.test(v)?'已暂存 · @AI 将随本轮一起送达':'已暂存 · 本轮第 '+r.count+' 条（右侧可回看，最后一起发出）');
-      return fetchDrafts();
-    }).then(function(){p.classList.remove('bt-open');renderSide();if(!sideOpen())toggleSide(true)})
-      .catch(function(e){toast('暂存失败：'+e.message)});
+    // @AI 前置本地查（叠加，非替换）：召唤先在本地列台账、不写任何记录——
+    // 解惑不发；仍要问 → 去掉召唤走普通流转；本地无台账可查 → 保留 @AI，由对端 /reply 代答兜底
+    if(/@ai\b/i.test(v)){aiLocal(p,block,v);return}
+    saveDraft(p,block,v,false);
+  });
+}
+function saveDraft(p,block,body,aiKept){
+  post('/baton/draft',{path:location.pathname,block:block,body:body}).then(function(r){
+    var ta=p.querySelector('textarea');if(ta)ta.value='';
+    toast(aiKept?'已暂存 · @AI 将随本轮送达，由对端依台账代答':'已暂存 · 本轮第 '+r.count+' 条（右侧可回看，最后一起发出）');
+    return fetchDrafts();
+  }).then(function(){p.classList.remove('bt-open');renderSide();if(!sideOpen())toggleSide(true)})
+    .catch(function(e){toast('暂存失败：'+e.message)});
+}
+// @AI 的本地面板：数据与提示条同源（anchors.json），只在本机渲染，threads.jsonl 里不出现任何东西
+function aiLocal(p,block,v){
+  var old=p.querySelector('.bt-ai');if(old)old.remove();
+  var rel=ledgerFor(block),pool=(rel.length?rel:LEDGER.slice(-3)).slice(0,4),found=pool.length>0;
+  var h='<div class="bt-lhd">@AI · '+(rel.length
+    ?'台账里查到 '+rel.length+' 条相关（只有你看得见，未发出）'
+    :(found?'本区块没有锚定的拍板 · 本功能最近的记载：':'本地没查到台账记载（这个功能可能还没有拍板）'))+'</div>';
+  pool.forEach(function(e){h+=ledgerRow(e,true)});
+  h+='<div class="bt-lbtns">'+(found
+    ?'<button data-ai="drop">解惑了 · 不发</button><button data-ai="strip" class="bt-lpri">仍要问 · 发给持棒人</button>'
+    :'<button data-ai="drop">算了</button><button data-ai="keep" class="bt-lpri">发出 · 由对端依台账代答</button>')+'</div>';
+  var box=el('div','bt-ai',h);
+  p.querySelector('.bt-compose').appendChild(box);
+  box.addEventListener('click',function(ev){
+    var act=ev.target.getAttribute&&ev.target.getAttribute('data-ai');if(!act)return;
+    box.remove();
+    if(act==='drop'){if(found){var ta=p.querySelector('textarea');if(ta)ta.value='';toast('已解惑 · 没有发出任何内容')}return}
+    if(act==='strip'){var b=v.replace(/@ai\b/ig,'').replace(/[ \t]{2,}/g,' ').trim();
+      if(!b){toast('去掉 @AI 后没有剩余内容，未发出');return}
+      saveDraft(p,block,b,false);return}
+    saveDraft(p,block,v,true);
   });
 }
 function ensurePanel(){
@@ -269,7 +412,8 @@ function renderTabs(){
 }
 function boot(){
   renderTabs();
-  reload().then(function(){
+  watchViews();
+  reload().then(reloadLedger).then(function(){
     return fetch('/baton/health',{cache:'no-store'}).then(function(r){return r.ok?r.json():null}).catch(function(){return null});
   }).then(function(h){
     HEALTH=h;

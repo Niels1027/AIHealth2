@@ -1,5 +1,5 @@
 // /review 的确定性半程：fetch 后直接读远端内容，工作区一根汗毛都不动
-// 列出「交给我的活」：我在 to/defaultNotify 里的已交接功能 + @我 的未结评论
+// 列出「交给我的活」：我在 to/defaultNotify 里的已交接功能 + @我 的未结评论 + 台账摘要（有据可查先知道）
 // 用法：node .baton/scripts/review-queue.mjs [--as github登录名] [--json]
 import path from 'node:path';
 import { parseArgs, repoRoot, readTeam, git, parseYaml, whoami, warnIfUnmatched, effectiveStatuses, openCmd, listLocalDrafts } from './_lib.mjs';
@@ -51,6 +51,20 @@ for (const name of features) {
     const d = showR(item.handoffDoc);
     item.handoffExcerpt = d.status === 0 ? d.stdout.split('\n').slice(0, 12).join('\n') : '';
   }
+  // 台账摘要：打开页面之前就知道有据可查（读远端 D*.yaml，同样零 checkout）。
+  // relevant = 锚着「@你评论所在区块」的条目——最可能替你省一轮来回的那几条。
+  const lsL = git(['ls-tree', '-r', '--name-only', ref, `${team.featuresDir}/${name}/ledger`], { cwd: root });
+  const dFiles = (lsL.stdout || '').split('\n').filter((f) => /\/D\d+\.yaml$/.test(f))
+    .sort((a, b) => parseInt(a.match(/D(\d+)\.yaml$/)[1], 10) - parseInt(b.match(/D(\d+)\.yaml$/)[1], 10));
+  const ledger = dFiles.map((f) => { const d = showR(f); return d.status === 0 ? parseYaml(d.stdout) : null; }).filter(Boolean);
+  const myBlocks = new Set(atMe.map((t) => t.block).filter(Boolean));
+  const relevant = ledger.filter((e) => (e.anchors || []).some((a) => myBlocks.has(a)))
+    .map((e) => ({ id: e.id, title: e.title || '', anchors: e.anchors || [] }));
+  // 刚收到交接的人还没有任何 @他 评论，relevant 必然为空——而这正是最常见的场景。
+  // 退而给最近两条：塑造了这一版的就是它们，比只报一个条数有用得多。
+  const recent = relevant.length ? [] : ledger.slice(-2).reverse()
+    .map((e) => ({ id: e.id, title: e.title || '', anchors: e.anchors || [] }));
+  item.ledger = { count: ledger.length, relevant, recent };
   queue.push(item);
 }
 
@@ -63,6 +77,11 @@ if (!queue.length) { console.log(`没有交给 ${me} 的待办（远端 ${ref}�
 for (const q of queue) {
   console.log(`■ ${q.title}（${q.feature}）${q.version} · ${q.status} · 持棒 ${q.holder}`);
   if (q.handoff) console.log(`  交接 ${q.handoff.id} → ${(q.handoff.to || []).join(', ')} · 交接单 ${q.handoffDoc}`);
+  if (q.ledger && q.ledger.count) {
+    const rel = q.ledger.relevant, rec = q.ledger.recent || [];
+    console.log(`  台账 ${q.ledger.count} 条拍板${rel.length ? ` · ${rel.map((e) => e.id).join('/')} 锚着 @你评论的区块` : (rec.length ? ' · 最近两条：' : '')}`);
+    for (const e of (rel.length ? rel.slice(0, 2) : rec)) console.log(`    ${e.id}「${e.title}」`);
+  }
   for (const t of q.atMe) console.log(`  @你 [${t.block || t.parent}] ${t.author}: ${String(t.body).slice(0, 60)}`);
   console.log(`  查看：${openCmd(root, q.feature, '--review')}   （读远端版本，不动你的工作区）`);
 }

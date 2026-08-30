@@ -13,14 +13,17 @@ const capability = fs.existsSync(verFile) ? fs.readFileSync(verFile, 'utf8').tri
 // 本机那个全局 baton 只是转发器；读它的打包版本仅用于「要不要提醒你更新本机命令」
 function localShimVersion() {
   const which = sh('sh', ['-c', 'command -v baton']);
-  if (which.status !== 0 || !which.stdout) return null;
+  if (which.status !== 0 || !which.stdout) return null;          // 真的没装
   try {
     const shim = fs.readFileSync(which.stdout, 'utf8');
     const m = shim.match(/exec node "([^"]+)"/);
-    if (!m) return null;
-    const pkg = path.join(path.dirname(path.dirname(m[1])), 'package.json');
-    if (!fs.existsSync(pkg)) return null;
-    return { version: JSON.parse(fs.readFileSync(pkg, 'utf8')).version, kitPath: path.dirname(path.dirname(m[1])) };
+    if (!m) return null;                                          // 同名但不是 Baton 的命令
+    const kitPath = path.dirname(path.dirname(m[1]));
+    const pkg = path.join(kitPath, 'package.json');
+    // 装了、但指向的 kit 不见了（快照被删/搬走）——这时 baton 命令是坏的，
+    // 报「没装」会让人白找半天，必须说清是坏了以及怎么修。
+    if (!fs.existsSync(pkg)) return { broken: true, kitPath, shim: which.stdout };
+    return { version: JSON.parse(fs.readFileSync(pkg, 'utf8')).version, kitPath };
   } catch { return null; }
 }
 
@@ -41,7 +44,10 @@ if (!capability) {
 
 console.log(`Baton ${capability}（${path.basename(root)}）—— 这是本项目实际在用的能力版本`);
 console.log(`  脚本与六条命令都随仓库分发：升级 = 有人跑 baton init 后推送，其余人 git pull`);
-if (local) {
+if (local && local.broken) {
+  console.log(`  ⚠ 本机的 baton 命令是坏的：它指向 ${local.kitPath}，那里已经没有 kit 了`);
+  console.log(`     重装即可：到 kit 目录跑 node bin/baton.mjs install（或直接用仓库里的 .baton/scripts/）`);
+} else if (local) {
   const same = local.version === capability;
   console.log(`  本机 baton 命令：${local.version}${same ? '' : '（旧快照）'} —— 只是转发器，执行的是本仓 .baton/scripts/，${same ? '与上面一致' : '和上面不一致不影响功能'}`);
   if (!same) {

@@ -1,5 +1,6 @@
-// 台账可视化页生成器（确定性渲染；入账即重跑；手编 ledger/index.html 会被覆盖）
+// 台账可视化页生成器（确定性渲染；入账即重跑；手编 ledger/index.html 与 anchors.json 会被覆盖）
 // 三处互链：台账条目 ↔ 原型锚点（#baton-block=）↔ 讨论出处（session 文件 / 评论线程）
+// 附产 anchors.json：区块 → 条目的反转索引（评论框拍板提示 / @AI 本地查的数据源）
 // 用法：node .baton/scripts/render-ledger.mjs <feature>
 import fs from 'node:fs';
 import path from 'node:path';
@@ -105,4 +106,21 @@ ${rows || '<div class="empty">还没有拍板记录 · 第一次 /preview 对话
 `;
 
 fs.writeFileSync(path.join(ledgerDir, 'index.html'), html);
-console.log(`✓ 台账页已生成：${path.relative(root, path.join(ledgerDir, 'index.html'))}（${entries.length} 条）`);
+
+// 反转索引（区块 → 管它的条目）：区块级拍板提示与 @AI 前置本地查的数据源。
+// 与台账页同一班车（入账/纠错即重渲染，永远新鲜）；loader 用相对路径 fetch——
+// 本机伴侣、--review worktree、云端网页三处直读同一份静态文件，零额外接口。
+const anchorsIndex = {
+  generated: nowIso(),
+  feature,
+  entries: entries.slice().reverse().map((e) => ({
+    id: e.id,
+    title: e.title || '',
+    conclusion: e.conclusion || '',
+    anchors: e.anchors || [],
+    decidedBy: e.decidedBy || '',
+    ts: e.ts || '',
+  })),
+};
+fs.writeFileSync(path.join(ledgerDir, 'anchors.json'), JSON.stringify(anchorsIndex) + '\n');
+console.log(`✓ 台账页已生成：${path.relative(root, path.join(ledgerDir, 'index.html'))}（${entries.length} 条 · 含 anchors.json 反转索引）`);

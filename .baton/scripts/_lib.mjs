@@ -251,8 +251,36 @@ export function readTeam(root) {
   t.defaultBranch = t.defaultBranch || 'main';
   t.companion = t.companion || {};
   t.companion.port = t.companion.port || 4173;
+  t.cloud = t.cloud || {};          // cloud.baseUrl 配了才有网页链接（第二级）；没配一切照旧走本机命令
   t.roster = t.roster || [];
   return t;
+}
+
+// GitHub 的 owner/repo（从 origin 远端解析）——云端页面 URL 与「在 GitHub 上看」都要它
+export function ownerRepo(root) {
+  const r = git(['remote', 'get-url', 'origin'], { cwd: root });
+  if (r.status !== 0) return null;
+  const m = r.stdout.match(/github\.com[:/]([^/]+)\/([^/.]+?)(?:\.git)?\/?$/);
+  return m ? { owner: m[1], repo: m[2] } : null;
+}
+
+// 功能的云端页面地址；未配 cloud.baseUrl 或识别不出 owner/repo 时返回 null（调用方回落到本机命令提示）
+// owner/repo 默认从 origin 解析；远端不是 github.com（镜像、自建 gitlab 中转等）时可在
+// team.yaml 写 cloud.repo: "owner/repo" 显式指定。
+export function cloudUrl(root, team, feature, sub = '') {
+  const c = team.cloud || {};
+  const base = String(c.baseUrl || '').replace(/\/$/, '');
+  if (!base) return null;
+  let owner, repo;
+  if (c.repo && String(c.repo).includes('/')) {
+    [owner, repo] = String(c.repo).split('/');
+  } else {
+    const or = ownerRepo(root);
+    if (!or) return null;
+    ({ owner, repo } = or);
+  }
+  if (!owner || !repo) return null;
+  return `${base}/${owner}/${repo}/${team.featuresDir}/${feature}/${sub}`;
 }
 export function featureDir(root, team, name) { return path.join(root, team.featuresDir, name); }
 export function taskFile(root, team, name) { return path.join(featureDir(root, team, name), 'task.yaml'); }
@@ -406,13 +434,18 @@ export function mergeById(a, b) {
   return out.sort((x, y) => String(x.ts || '').localeCompare(String(y.ts || '')));
 }
 
+// 取远端引用。失败原因必须带回来——只回一个 false，调用方就只能猜「网络不好」，
+// 而实际可能是没权限；读侧一旦静默降级，「读不到」会被当成「没有评论」。
 export function fetchRemote(root) {
-  return git(['fetch', 'origin', '--quiet'], { cwd: root }).status === 0;
+  const r = git(['fetch', 'origin', '--quiet'], { cwd: root });
+  if (r.status === 0) return { ok: true, error: null };
+  return { ok: false, error: (r.stderr || r.stdout || '').split('\n').find((l) => l.trim()) || '未知原因' };
 }
 
 // fetch 后的完整同步画像：落后/领先、远端将改哪些文件、与本地脏文件的交集
 export function syncStatus(root, team, { fetch = true } = {}) {
-  const fetched = fetch ? fetchRemote(root) : true;
+  const f = fetch ? fetchRemote(root) : { ok: true, error: null };
+  const fetched = f.ok;
   const ref = `origin/${team.defaultBranch}`;
   const n = (args) => parseInt(git(args, { cwd: root }).stdout, 10) || 0;
   const behind = n(['rev-list', '--count', `HEAD..${ref}`]);
@@ -429,8 +462,8 @@ export function syncStatus(root, team, { fetch = true } = {}) {
     ? git(['diff', '--name-only', `HEAD...${ref}`], { cwd: root }).stdout.split('\n').filter(Boolean)
     : [];
   const dirtySet = new Set(dirty);
-  const overlap = incoming.filter((f) => dirtySet.has(f));
-  return { fetched, behind, ahead, dirty, incoming, overlap, ref };
+  const overlap = incoming.filter((f2) => dirtySet.has(f2));
+  return { fetched, fetchError: f.error, behind, ahead, dirty, incoming, overlap, ref };
 }
 
 export function mergeRemote(root, team) {
@@ -440,15 +473,38 @@ export function mergeRemote(root, team) {
   return { ok: false, reason: (r.stderr || r.stdout || '').split('\n')[0] || '合并失败' };
 }
 
+// 推送失败归因。auth 必须排在 offline 前面：GitHub 的 403 报文长这样——
+//   fatal: unable to access 'https://…': The requested URL returned error: 403
+// 里面就含「unable to access」，先匹配 offline 会把「没权限」说成「网络不好，稍后补发」，
+// 而那是永远等不到的恢复。任何情况下都把 stderr 首行原样带出，绝不吞。
+const PUSH_FAILURES = [
+  ['auth', /permission denied|authentication failed|could not read username|could not read password|invalid username or password|access denied|error: 40[13]|403 forbidden/i],
+  ['offline', /could not resolve host|failed to connect|connection (refused|reset|timed out)|network is unreachable|timed out|unable to access|does not appear to be a git repo/i],
+];
+const PUSH_HINT = {
+  auth: (l) => `没有推送权限或凭据失效（${l}）——这不是网络问题，等下去不会自己好。先解决权限/登录，再在会话里说一声补发。`,
+  offline: (l) => `连不上远端（${l}）。改动已在本地定格，恢复后在会话里说一声即可补发。`,
+  rejected: (l) => `推送被拒（${l}）。改动已在本地定格；在会话里说一声，我来处理同步。`,
+};
+export function classifyPushFailure(stderr) {
+  const msg = String(stderr || '');
+  const line = msg.split('\n').find((l) => l.trim()) || '远端拒绝';
+  const hit = PUSH_FAILURES.find(([, re]) => re.test(msg));
+  const reason = hit ? hit[0] : 'rejected';
+  return { reason, hint: PUSH_HINT[reason](line), detail: line };
+}
+
 // 写路径的标准收尾（前提：调用方已把自己要发布的文件 commit 完——commit → merge → push）。
-// 返回 { pushed, merged, reason, hint }；reason: 'overlap' | 'conflict' | 'offline' | 'rejected'
+// 返回 { pushed, merged, reason, hint }；reason: 'overlap' | 'conflict' | 'auth' | 'offline' | 'rejected'
 export function syncThenPush(root, team, { refspecs } = {}) {
   const specs = refspecs || [`HEAD:${team.defaultBranch}`];
   const push = () => git(['push', '--quiet', 'origin', ...specs], { cwd: root });
   let st = syncStatus(root, team);
   if (!st.fetched) {
-    if (push().status === 0) return { pushed: true, merged: false };
-    return { pushed: false, reason: 'offline', hint: '连不上远端（网络或代理）。改动已在本地定格，恢复后在会话里说一声即可补发。' };
+    // fetch 不通不代表 push 不通（只读凭据、代理白名单等），先试一把再下结论
+    const p0 = push();
+    if (p0.status === 0) return { pushed: true, merged: false };
+    return { pushed: false, ...classifyPushFailure(p0.stderr || st.fetchError) };
   }
   let merged = false;
   if (st.behind > 0) {
@@ -467,12 +523,7 @@ export function syncThenPush(root, team, { refspecs } = {}) {
     if (st.behind > 0 && !st.overlap.length && mergeRemote(root, team).ok) { merged = true; p = push(); }
   }
   if (p.status === 0) return { pushed: true, merged };
-  const msg = p.stderr || '';
-  const offline = /could not resolve host|unable to access|failed to connect|connection|timed out|not appear to be a git repo/i.test(msg);
-  return { pushed: false, reason: offline ? 'offline' : 'rejected',
-    hint: offline
-      ? '连不上远端（网络或代理）。改动已在本地定格，恢复后在会话里说一声即可补发。'
-      : `推送被拒（${msg.split('\n')[0] || '远端拒绝'}）。改动已在本地定格；在会话里说一声，我来处理同步。` };
+  return { pushed: false, ...classifyPushFailure(p.stderr) };
 }
 
 // ---------- 评论草稿（攒批模式；本机文件不入库，防忘发要靠到处提醒） ----------
